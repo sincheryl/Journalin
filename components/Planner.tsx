@@ -5,7 +5,7 @@ import PastelMap from './PastelMap.tsx';
 import LoadingOverlay from './LoadingOverlay.tsx';
 import SurvivalKit from './SurvivalKit.tsx';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { ShieldAlert, Trash2, Clock, Home, Building, Sparkles, Train, Car, Navigation, HelpCircle, ChevronRight, DollarSign, Timer, MapPin, GripVertical, BookOpen, Compass, ArrowUpRight } from 'lucide-react';
+import { ShieldAlert, Trash2, Clock, Home, Building, Sparkles, Train, Car, Navigation, HelpCircle, ChevronRight, DollarSign, Timer, MapPin, GripVertical, BookOpen, Compass, ArrowUpRight, ExternalLink } from 'lucide-react';
 
 const PlaceThumbnail: React.FC<{ item: ItineraryItem }> = ({ item }) => {
   const [img, setImg] = useState<string | null>(null);
@@ -104,7 +104,6 @@ export default function Planner({ profile }: PlannerProps) {
   const [plan, setPlan] = useState<DayPlan[] | null>(null);
   const [summary, setSummary] = useState('');
   const [survivalKit, setSurvivalKit] = useState<SurvivalKitType | null>(null);
-  const [sources, setSources] = useState<{ uri: string; title: string }[] | undefined>(undefined);
   const [moodImage, setMoodImage] = useState<string | null>(null);
   const [activeDate, setActiveDate] = useState<string | null>(null);
   const [isSetupView, setIsSetupView] = useState(true);
@@ -158,7 +157,6 @@ export default function Planner({ profile }: PlannerProps) {
     setLoading(true);
     setInquiryData(null);
     setMoodImage(null);
-    setSources(undefined);
     setActiveView('journal');
     
     const extraContext = Object.entries(inquiryAnswers)
@@ -176,7 +174,6 @@ export default function Planner({ profile }: PlannerProps) {
       setPlan(result.itinerary);
       setSummary(result.summary);
       setSurvivalKit(result.survivalKit);
-      setSources(result.sources);
       setMoodImage(heroImg);
       if (result.itinerary.length > 0) setActiveDate(result.itinerary[0].date);
       setIsSetupView(false);
@@ -551,48 +548,59 @@ export default function Planner({ profile }: PlannerProps) {
                                 </div>
 
                                 <div className="flex items-end justify-between border-b border-morandi-forest/5 pb-8 relative">
-                                  <div className="relative">
+                                  <div className="relative shrink-0">
                                      <span className="text-[11rem] font-serif text-morandi-forest/5 absolute -top-16 -left-12 select-none group-hover:text-morandi-forest/10 transition-all duration-1000 pointer-events-none">{item.time}</span>
                                      <span className="text-8xl font-serif text-morandi-forest relative z-10 drop-shadow-sm tracking-tighter leading-none">{item.time}</span>
                                   </div>
                                   
-                                  <div className="flex flex-col items-end gap-3 mb-2 min-w-0">
-                                     <div className="flex items-center gap-2 flex-nowrap shrink-0">
+                                  <div className="flex flex-col items-end gap-2 mb-2 min-w-0 w-full overflow-hidden">
+                                     {/* Metadata Row: Forced Single Line */}
+                                     <div className="flex items-center gap-2 flex-nowrap shrink-0 overflow-x-auto no-scrollbar justify-end w-full pb-1">
                                         {item.duration && (
-                                          <div className="flex items-center gap-2 text-morandi-sage px-3 py-1 bg-morandi-sage/5 rounded-full border border-morandi-sage/10 whitespace-nowrap">
-                                             <Timer className="w-3.5 h-3.5" />
-                                             <span className="text-[10px] font-black uppercase tracking-widest">{item.duration}</span>
+                                          <div className="flex items-center gap-2 text-morandi-sage px-3 py-1.5 bg-morandi-sage/5 rounded-full border border-morandi-sage/10 whitespace-nowrap shrink-0">
+                                             <Timer className="w-3 h-3" />
+                                             <span className="text-[9px] font-black uppercase tracking-widest">{item.duration}</span>
                                           </div>
                                         )}
                                         {item.costEstimate && (
-                                          <div className="flex items-center gap-2 text-morandi-sunset font-bold px-3 py-1 bg-morandi-sunset/5 rounded-full border border-morandi-sunset/10 whitespace-nowrap">
-                                             <DollarSign className="w-3.5 h-3.5" />
-                                             <span className="text-[10px] font-black uppercase tracking-widest">{item.costEstimate}</span>
+                                          <div className="flex items-center gap-2 text-morandi-sunset font-bold px-3 py-1.5 bg-morandi-sunset/5 rounded-full border border-morandi-sunset/10 whitespace-nowrap shrink-0">
+                                             <DollarSign className="w-3 h-3" />
+                                             <span className="text-[9px] font-black uppercase tracking-widest">{item.costEstimate}</span>
                                           </div>
                                         )}
                                         {(item.openTime || item.closeTime) && (
-                                          <div className="flex items-center gap-2 text-morandi-forest px-3 py-1 bg-white/50 rounded-full border border-white shadow-sm whitespace-nowrap">
-                                             <Clock className="w-3.5 h-3.5 opacity-40" />
-                                             <span className="text-[10px] font-black uppercase tracking-widest">
+                                          <div className="flex items-center gap-2 text-morandi-forest px-3 py-1.5 bg-white/50 rounded-full border border-white shadow-sm whitespace-nowrap shrink-0">
+                                             <Clock className="w-3 h-3 opacity-40" />
+                                             <span className="text-[9px] font-black uppercase tracking-widest">
                                                {item.openTime || '--'} - {item.closeTime || '--'}
                                              </span>
                                           </div>
                                         )}
+                                        <a 
+                                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.title}, ${config.destination}`)}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="flex items-center gap-2 px-3 py-1.5 bg-morandi-forest text-white rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap shrink-0 hover:bg-morandi-forest/80 transition-colors shadow-sm"
+                                        >
+                                          <MapPin className="w-3 h-3" />
+                                          MAP
+                                        </a>
                                         <button 
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             handleDeleteItem(item.id);
                                           }}
-                                          className="p-3 text-morandi-forest/10 hover:text-red-400 hover:bg-red-50/50 rounded-full transition-all shrink-0"
+                                          className="p-2 text-morandi-forest/10 hover:text-red-400 hover:bg-red-50/50 rounded-full transition-all shrink-0"
                                           title="Remove from itinerary"
                                         >
-                                          <Trash2 className="w-4 h-4" />
+                                          <Trash2 className="w-3.5 h-3.5" />
                                         </button>
                                      </div>
                                      
                                      <div className="flex flex-col items-end w-full">
-                                        <span className="text-[11px] font-black uppercase tracking-[0.5em] text-morandi-forest/40 mb-1">{item.type}</span>
-                                        <h3 className="text-4xl font-bold text-morandi-forest text-right leading-tight max-w-lg tracking-tight truncate w-full">{item.title}</h3>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-morandi-forest/40 mb-0.5">{item.type}</span>
+                                        <h3 className="text-4xl font-bold text-morandi-forest text-right leading-tight max-w-full tracking-tight w-full line-clamp-2">{item.title}</h3>
                                      </div>
                                   </div>
                                 </div>
@@ -609,26 +617,6 @@ export default function Planner({ profile }: PlannerProps) {
                           </AnimatePresence>
                         </Reorder.Group>
                       </div>
-
-                      {sources && (
-                        <div className="mt-48 p-20 glass-panel rounded-[80px] shadow-inner border-white/60">
-                          <h4 className="text-[11px] font-black uppercase tracking-[0.6em] text-morandi-forest opacity-30 mb-12">BIBLIOGRAPHY</h4>
-                          <div className="flex flex-wrap gap-6">
-                            {sources.map((source, i) => (
-                              <a 
-                                key={i} 
-                                href={source.uri} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                className="bg-white/80 px-12 py-6 rounded-[32px] text-xs font-bold text-morandi-forest hover:bg-morandi-forest hover:text-white transition-all shadow-xl flex items-center gap-4 group border border-white/40"
-                              >
-                                <ArrowUpRight className="w-5 h-5 transition-transform group-hover:rotate-45" />
-                                {source.title.toUpperCase()}
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </motion.div>
                   ) : (
                     <motion.div
