@@ -1,0 +1,7 @@
+{
+  "name": "Journalin",
+  "description": "A serene, AI-powered travel planning companion with a Morandi atmospheric mesh aesthetic.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

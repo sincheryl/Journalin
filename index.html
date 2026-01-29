@@ -1,0 +1,120 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journalin | AI Travel Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              morandi: {
+                slate: '#A9BCC2',
+                mist: '#F7F9F8',
+                sage: '#CBD9C9',
+                forest: '#092F26',
+                sunset: '#E47C58',
+                arctic: '#DCE4E8',
+              }
+            },
+            fontFamily: {
+              serif: ['"Playfair Display"', 'serif'],
+              sans: ['Inter', 'sans-serif'],
+            },
+            borderRadius: {
+              '3xl': '24px',
+              '4xl': '32px',
+              '5xl': '48px',
+            },
+            animation: {
+              'mesh': 'mesh 20s ease-in-out infinite',
+              'float': 'float 8s ease-in-out infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-15px)' },
+              },
+              mesh: {
+                '0%, 100%': { 'background-position': '0% 50%' },
+                '50%': { 'background-position': '100% 50%' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        color: #092F26;
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(-45deg, #A9BCC2, #DCE4E8, #A9BCC2, #F7F9F8);
+        background-size: 400% 400%;
+        animation: mesh 20s ease-in-out infinite;
+      }
+      h1, h2, h3, h4 {
+        font-family: 'Playfair Display', serif;
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(9, 47, 38, 0.05);
+        border-radius: 10px;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .glass-panel {
+        background: rgba(247, 249, 248, 0.6);
+        backdrop-filter: blur(40px);
+        -webkit-backdrop-filter: blur(40px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+      }
+
+      /* Morandi Map Styles Override */
+      .leaflet-container {
+        background-color: #F7F9F8 !important;
+        filter: grayscale(0.2) sepia(0.1) hue-rotate(155deg) saturate(0.6) brightness(1.05);
+      }
+      .leaflet-marker-icon {
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 8px 24px rgba(9, 47, 38, 0.15);
+      }
+    </style>
+    <!-- Leaflet Map JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "framer-motion": "https://esm.sh/framer-motion@^11.0.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.471.1"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>
