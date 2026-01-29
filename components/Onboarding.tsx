@@ -38,12 +38,12 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
     switch (step) {
       case 1:
         return (
-          <div className="space-y-12">
-            <header className="space-y-4 text-center">
-              <span className="text-[10px] font-black uppercase tracking-[0.6em] text-morandi-forest opacity-40">CHAPTER ONE</span>
-              <h2 className="text-5xl text-morandi-forest font-serif leading-tight">What is your Chronotype?</h2>
+          <div className="space-y-8 md:space-y-12">
+            <header className="space-y-2 md:space-y-4 text-center">
+              <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] text-morandi-forest opacity-40">CHAPTER ONE</span>
+              <h2 className="text-3xl md:text-5xl text-morandi-forest font-serif leading-tight">What is your Chronotype?</h2>
             </header>
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4 md:gap-6">
               {[
                 { type: Chronotype.EARLY_BIRD, label: 'Early Bird' },
                 { type: Chronotype.FLOW, label: 'Flow' },
@@ -52,9 +52,9 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
                 <button
                   key={c.type}
                   onClick={() => setChronotype(c.type)}
-                  className={`p-8 rounded-[32px] text-center border-2 transition-all duration-500 ${chronotype === c.type ? 'bg-morandi-forest text-morandi-mist border-morandi-forest shadow-2xl scale-[1.02]' : 'bg-morandi-mist/40 backdrop-blur-xl border-white/40 text-morandi-forest hover:bg-white'}`}
+                  className={`p-6 md:p-8 rounded-3xl md:rounded-[32px] text-center border-2 transition-all duration-500 ${chronotype === c.type ? 'bg-morandi-forest text-morandi-mist border-morandi-forest shadow-2xl scale-[1.02]' : 'bg-morandi-mist/40 backdrop-blur-xl border-white/40 text-morandi-forest hover:bg-white'}`}
                 >
-                  <span className="text-2xl font-bold tracking-tight italic">
+                  <span className="text-xl md:text-2xl font-bold tracking-tight italic">
                     {c.label}
                   </span>
                 </button>
@@ -64,12 +64,12 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
         );
       case 2:
         return (
-          <div className="space-y-12">
-            <header className="space-y-4 text-center">
-              <span className="text-[10px] font-black uppercase tracking-[0.6em] text-morandi-forest opacity-40">CHAPTER ONE</span>
-              <h2 className="text-5xl text-morandi-forest font-serif leading-tight">Travel Pace</h2>
+          <div className="space-y-8 md:space-y-12">
+            <header className="space-y-2 md:space-y-4 text-center">
+              <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] text-morandi-forest opacity-40">CHAPTER ONE</span>
+              <h2 className="text-3xl md:text-5xl text-morandi-forest font-serif leading-tight">Travel Pace</h2>
             </header>
-            <div className="glass-panel p-16 rounded-[48px] shadow-inner space-y-8">
+            <div className="glass-panel p-8 md:p-16 rounded-4xl md:rounded-[48px] shadow-inner space-y-8">
               <input
                 type="range"
                 min="0"
@@ -78,7 +78,7 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
                 onChange={(e) => setPace(Number(e.target.value))}
                 className="w-full h-3 bg-morandi-forest/10 rounded-full appearance-none cursor-pointer accent-morandi-sunset"
               />
-              <div className="flex justify-between font-black text-[10px] uppercase tracking-widest text-morandi-forest opacity-40">
+              <div className="flex justify-between font-black text-[8px] md:text-[10px] uppercase tracking-widest text-morandi-forest opacity-40">
                 <span>Spartan (0%)</span>
                 <span>Chill Cat (100%)</span>
               </div>
@@ -87,19 +87,19 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
         );
       case 3:
         return (
-          <div className="space-y-12">
-            <header className="space-y-4 text-center">
-              <span className="text-[10px] font-black uppercase tracking-[0.6em] text-morandi-forest opacity-40">CHAPTER ONE</span>
-              <h2 className="text-5xl text-morandi-forest font-serif leading-tight">Interest Radar</h2>
+          <div className="space-y-8 md:space-y-12">
+            <header className="space-y-2 md:space-y-4 text-center">
+              <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] text-morandi-forest opacity-40">CHAPTER ONE</span>
+              <h2 className="text-3xl md:text-5xl text-morandi-forest font-serif leading-tight">Interest Radar</h2>
             </header>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-4 md:gap-6">
               {['Urban', 'Citywalk', 'Food', 'Culture', 'Nature', 'Shopping'].map((interest) => (
                 <div
                   key={interest}
                   onClick={() => toggleInterest(interest as Interest)}
-                  className={`flex items-center justify-center p-8 rounded-[32px] border-2 cursor-pointer transition-all duration-500 ${interests.includes(interest as Interest) ? 'bg-morandi-forest text-morandi-mist border-morandi-forest shadow-2xl' : 'bg-morandi-mist/40 backdrop-blur-xl border-white/40 text-morandi-forest hover:bg-white'}`}
+                  className={`flex items-center justify-center p-6 md:p-8 rounded-3xl md:rounded-[32px] border-2 cursor-pointer transition-all duration-500 ${interests.includes(interest as Interest) ? 'bg-morandi-forest text-morandi-mist border-morandi-forest shadow-2xl' : 'bg-morandi-mist/40 backdrop-blur-xl border-white/40 text-morandi-forest hover:bg-white'}`}
                 >
-                  <span className="text-lg font-bold tracking-tight">{interest}</span>
+                  <span className="text-base md:text-lg font-bold tracking-tight">{interest}</span>
                 </div>
               ))}
             </div>
@@ -107,12 +107,12 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
         );
       case 4:
         return (
-          <div className="space-y-12">
-            <header className="space-y-4 text-center">
-              <span className="text-[10px] font-black uppercase tracking-[0.6em] text-morandi-forest opacity-40">CHAPTER ONE</span>
-              <h2 className="text-5xl text-morandi-forest font-serif leading-tight">Food Preferences</h2>
+          <div className="space-y-8 md:space-y-12">
+            <header className="space-y-2 md:space-y-4 text-center">
+              <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] text-morandi-forest opacity-40">CHAPTER ONE</span>
+              <h2 className="text-3xl md:text-5xl text-morandi-forest font-serif leading-tight">Food Preferences</h2>
             </header>
-            <div className="glass-panel p-16 rounded-[48px] shadow-inner space-y-12">
+            <div className="glass-panel p-8 md:p-16 rounded-4xl md:rounded-[48px] shadow-inner space-y-10 md:space-y-12">
               <input
                 type="range"
                 min="0"
@@ -122,18 +122,18 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
                 onChange={(e) => setFoodScale(Number(e.target.value))}
                 className="w-full h-3 bg-morandi-forest/10 rounded-full appearance-none cursor-pointer accent-morandi-sunset"
               />
-              <div className="flex justify-between font-black text-[10px] uppercase tracking-widest text-morandi-forest opacity-40">
+              <div className="flex justify-between font-black text-[8px] md:text-[10px] uppercase tracking-widest text-morandi-forest opacity-40">
                 <span>Fuel</span>
                 <span>Foodie</span>
               </div>
-              <div className="flex flex-wrap justify-center gap-4">
+              <div className="flex flex-wrap justify-center gap-3 md:gap-4">
                 {['Spicy', 'Sweet', 'Vegetarian'].map((tag) => (
                   <button
                     key={tag}
                     onClick={() => toggleFoodTag(tag as FoodPreference)}
-                    className={`px-10 py-5 rounded-full border-2 transition-all duration-500 ${foodTags.includes(tag as FoodPreference) ? 'bg-morandi-sunset text-white border-morandi-sunset shadow-lg scale-105' : 'bg-white/40 backdrop-blur-xl border-white/20 text-morandi-forest'}`}
+                    className={`px-6 md:px-10 py-3 md:py-5 rounded-full border-2 transition-all duration-500 ${foodTags.includes(tag as FoodPreference) ? 'bg-morandi-sunset text-white border-morandi-sunset shadow-lg scale-105' : 'bg-white/40 backdrop-blur-xl border-white/20 text-morandi-forest'}`}
                   >
-                    <span className="font-bold text-sm tracking-tight">{tag}</span>
+                    <span className="font-bold text-xs md:text-sm tracking-tight">{tag}</span>
                   </button>
                 ))}
               </div>
@@ -142,12 +142,12 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
         );
       case 5:
         return (
-          <div className="space-y-12">
-            <header className="space-y-4 text-center">
-              <span className="text-[10px] font-black uppercase tracking-[0.6em] text-morandi-forest opacity-40">CHAPTER ONE</span>
-              <h2 className="text-5xl text-morandi-forest font-serif leading-tight">Budget Style</h2>
+          <div className="space-y-8 md:space-y-12">
+            <header className="space-y-2 md:space-y-4 text-center">
+              <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] text-morandi-forest opacity-40">CHAPTER ONE</span>
+              <h2 className="text-3xl md:text-5xl text-morandi-forest font-serif leading-tight">Budget Style</h2>
             </header>
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4 md:gap-6">
               {[
                 { type: BudgetType.BUDGET, label: 'Budget' },
                 { type: BudgetType.COST_EFFECTIVE, label: 'Balanced' },
@@ -156,9 +156,9 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
                 <button
                   key={b.type}
                   onClick={() => setBudget(b.type)}
-                  className={`p-8 rounded-[32px] text-center border-2 transition-all duration-500 ${budget === b.type ? 'bg-morandi-forest text-morandi-mist border-morandi-forest shadow-2xl scale-[1.02]' : 'bg-morandi-mist/40 backdrop-blur-xl border-white/40 text-morandi-forest hover:bg-white'}`}
+                  className={`p-6 md:p-8 rounded-3xl md:rounded-[32px] text-center border-2 transition-all duration-500 ${budget === b.type ? 'bg-morandi-forest text-morandi-mist border-morandi-forest shadow-2xl scale-[1.02]' : 'bg-morandi-mist/40 backdrop-blur-xl border-white/40 text-morandi-forest hover:bg-white'}`}
                 >
-                  <span className="text-2xl font-bold tracking-tight italic">
+                  <span className="text-xl md:text-2xl font-bold tracking-tight italic">
                     {b.label}
                   </span>
                 </button>
@@ -171,8 +171,8 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
   };
 
   return (
-    <div className="max-w-3xl mx-auto pt-32 px-10 min-h-screen flex flex-col justify-between pb-24 relative">
-      <div className="py-8">
+    <div className="max-w-3xl mx-auto pt-20 md:pt-32 px-6 md:px-10 min-h-screen flex flex-col justify-between pb-24 relative">
+      <div className="py-4 md:py-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
@@ -186,33 +186,33 @@ export default function Onboarding({ onFinish }: OnboardingProps) {
         </AnimatePresence>
       </div>
 
-      <div className="mt-16">
-        <div className="flex items-center justify-between gap-8">
+      <div className="mt-8 md:mt-16">
+        <div className="flex items-center justify-between gap-4 md:gap-8">
           {step > 1 ? (
             <button 
               onClick={() => {
                 setStep(step - 1);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="text-morandi-forest/60 font-black text-[10px] uppercase tracking-[0.4em] px-10 py-6 bg-white/20 backdrop-blur-xl rounded-full hover:bg-white hover:text-morandi-forest transition-all border border-white/40"
+              className="text-morandi-forest/60 font-black text-[8px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.4em] px-6 md:px-10 py-4 md:py-6 bg-white/20 backdrop-blur-xl rounded-full hover:bg-white hover:text-morandi-forest transition-all border border-white/40"
             >
               Back
             </button>
-          ) : <div />}
+          ) : <div className="hidden md:block" />}
           
           <button 
             onClick={handleNext}
-            className="bg-morandi-forest text-morandi-mist px-16 py-6 rounded-full font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-[1.05] active:scale-95 transition-all"
+            className="flex-1 md:flex-none bg-morandi-forest text-morandi-mist px-12 md:px-16 py-4 md:py-6 rounded-full font-black text-xs md:text-sm uppercase tracking-widest shadow-2xl hover:scale-[1.05] active:scale-95 transition-all"
           >
             {step === 5 ? 'Synthesize' : 'Next'}
           </button>
         </div>
         
-        <div className="flex justify-center gap-4 mt-12">
+        <div className="flex justify-center gap-3 md:gap-4 mt-10 md:mt-12">
           {[1,2,3,4,5].map(i => (
             <div 
               key={i} 
-              className={`h-1 rounded-full transition-all duration-700 ${i === step ? 'w-16 bg-morandi-forest' : 'w-4 bg-morandi-forest/10'}`} 
+              className={`h-1 rounded-full transition-all duration-700 ${i === step ? 'w-12 md:w-16 bg-morandi-forest' : 'w-3 md:w-4 bg-morandi-forest/10'}`} 
             />
           ))}
         </div>
