@@ -40,14 +40,30 @@ export interface TripConfig {
   customNote: string;
 }
 
+export interface InquiryQuestion {
+  id: string;
+  question: string;
+  options: string[];
+}
+
+export interface InquiryResult {
+  needInquiry: boolean;
+  reason?: string;
+  questions?: InquiryQuestion[];
+}
+
 export interface ItineraryItem {
   id: string;
   time: string;
   title: string;
   description: string;
-  visualPrompt: string; // Used to generate a specific image for this place
+  visualPrompt: string;
   location?: { lat: number; lng: number };
   type: 'hotel' | 'food' | 'activity' | 'transit';
+  costEstimate?: string;
+  duration?: string;
+  openTime?: string;
+  closeTime?: string;
   url?: string;
   imageUrl?: string;
 }
@@ -57,8 +73,30 @@ export interface DayPlan {
   items: ItineraryItem[];
 }
 
+export interface EssentialApp {
+  name: string;
+  purpose: string;
+  icon: string;
+}
+
+export interface BudgetEstimate {
+  currency: string;
+  accommodation: string;
+  food: string;
+  transport: string;
+  totalEstimated: string;
+}
+
+export interface SurvivalKit {
+  essentialApps: EssentialApp[];
+  packingList: string[];
+  localTips: string[];
+  budgetEstimate: BudgetEstimate;
+}
+
 export interface GenerationResult {
   itinerary: DayPlan[];
   summary: string;
+  survivalKit: SurvivalKit;
   sources?: { uri: string; title: string }[];
 }

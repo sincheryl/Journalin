@@ -38,6 +38,18 @@ const LoadingOverlay: React.FC<Props> = ({ isVisible, destination }) => {
   const [takingLong, setTakingLong] = useState(false);
 
   useEffect(() => {
+    if (isVisible) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isVisible]);
+
+  useEffect(() => {
     if (!isVisible) {
       setTakingLong(false);
       return;

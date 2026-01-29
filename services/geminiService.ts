@@ -1,17 +1,64 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
-import { UserProfile, TripConfig, GenerationResult } from "../types.ts";
+import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+import { UserProfile, TripConfig, GenerationResult, InquiryResult } from "../types.ts";
 
 const sanitizeJson = (text: string): string => {
   return text.replace(/```json/g, '').replace(/```/g, '').trim();
 };
 
 /**
- * Generate a travel plan using Gemini 2.5 Flash.
- * Explicitly instructs the model to use the googleMaps tool for real coordinates.
- * Strictly enforces English for all content including names and sources.
+ * Stage 1: Feasibility Check
+ * Analyzes the trip for logical gaps or contradictions.
  */
-export const generatePlan = async (profile: UserProfile, config: TripConfig): Promise<GenerationResult> => {
+export const checkPlanFeasibility = async (profile: UserProfile, config: TripConfig): Promise<InquiryResult> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  const systemInstruction = `
+    Role: Insightful "Journalin" Travel Curator. 
+    Analyze User Profile and Trip Config for logical contradictions or missing experiential details.
+    
+    CRITICAL RULES:
+    1. DO NOT ask for information already provided (e.g., Destination, Dates, Passengers, or Interests).
+    2. ONLY set "needInquiry": true if there is a genuine contradiction (e.g., a very high pace for a very short trip, or interests that don't match the destination).
+    3. If the plan is logically sound, return {"needInquiry": false}.
+    4. Respond ONLY in JSON.
+    
+    Schema: { "needInquiry": boolean, "reason": "string", "questions": [{ "id": "string", "question": "string", "options": ["string"] }] }
+  `;
+
+  const userContent = `
+    Destination: ${config.destination}
+    Dates: ${config.startDate} to ${config.endDate}
+    Passengers: ${config.passengers}
+    Traveler Pace: ${profile.pace}%
+    Interests: ${profile.interests.join(', ')}
+    Accommodation: ${config.accommodation}
+    Transport: ${config.transport}
+    User Custom Note: "${config.customNote}"
+  `;
+
+  try {
+    const response: GenerateContentResponse = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: userContent,
+      config: {
+        systemInstruction,
+        responseMimeType: "application/json",
+      }
+    });
+
+    return JSON.parse(sanitizeJson(response.text || "{\"needInquiry\": false}"));
+  } catch (e) {
+    console.error("Feasibility check error:", e);
+    return { needInquiry: false };
+  }
+};
+
+/**
+ * Stage 2: Itinerary Generation
+ * Using Gemini 3 with responseSchema for guaranteed JSON stability.
+ */
+export const generatePlan = async (profile: UserProfile, config: TripConfig, extraContext: string = ""): Promise<GenerationResult> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const safety = [
@@ -21,88 +68,107 @@ export const generatePlan = async (profile: UserProfile, config: TripConfig): Pr
   ].filter(Boolean).join(", ");
 
   const prompt = `
-    Task: Create a detailed travel itinerary for ${config.destination} from ${config.startDate} to ${config.endDate}.
-    User Profile: Pace ${profile.pace}%, Interests: ${profile.interests.join(', ')}.
-    Preferences: ${config.accommodation} accommodation, ${config.transport} transport.
-    Additional Notes: "${config.customNote}". Safety requirements: ${safety}.
+    Create a comprehensive travel plan for ${config.destination} from ${config.startDate} to ${config.endDate}.
+    User Profile: Pace ${profile.pace}%, Interests: ${profile.interests.join(', ')}, Budget Style: ${profile.budget}.
+    Config: ${config.accommodation}, ${config.transport}. Note: "${config.customNote}". ${safety}
+    ${extraContext ? `Additional Insights: ${extraContext}` : ""}
     
-    CRITICAL LANGUAGE REQUIREMENT: 
-    - The entire response MUST be in English.
-    - All place names (titles) MUST be provided in English (e.g., use "Forbidden City" instead of "故宫").
-    - Descriptions and summaries MUST be in English.
+    TASK: Generate a full itinerary with real lat/lng coordinates and survival info.
     
-    CRITICAL COORDINATE REQUIREMENT: 
-    - You MUST use the googleMaps tool for EVERY itinerary item to find its REAL latitude and longitude. 
+    CRITICAL REQUIREMENT FOR ACCOMMODATION: 
+    Do NOT use generic names like "Hotel" or "Your Accommodation". 
+    You MUST provide the name of a REAL, SPECIFIC hotel, hostel, or boutique stay that exists in ${config.destination} and matches the chosen style (${config.accommodation}).
+    Include the check-in as the first item of the first day and check-out as an item on the last day.
     
-    Return the response strictly as JSON:
-    {
-      "summary": "A brief aesthetic overview of the trip in English.",
-      "itinerary": [
-        {
-          "date": "YYYY-MM-DD",
-          "items": [
-            {
-              "id": "unique-string-id",
-              "time": "HH:MM",
-              "title": "Full English Name of Place",
-              "description": "Evocative 1-sentence description in English.",
-              "visualPrompt": "Detailed photography prompt in English.",
-              "type": "activity",
-              "location": { "lat": number, "lng": number }
-            }
-          ]
-        }
-      ],
-      "sources": [
-        { "title": "English Name of Source/Website", "uri": "URL" }
-      ]
-    }
+    CRITICAL REQUIREMENT FOR ESSENTIAL APPS:
+    For the 'icon' property of each app, use a SINGLE EMOJI that represents the app (e.g., "🚕" for Uber, "🗺️" for Maps, "🍱" for Yelp). 
+    DO NOT provide image URLs or web links.
+
+    Ensure 'openTime' and 'closeTime' are provided for all activities and restaurants (e.g. "09:00", "22:00").
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash", 
+    const response: GenerateContentResponse = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
-        tools: [{ googleMaps: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            summary: { type: Type.STRING },
+            itinerary: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  date: { type: Type.STRING },
+                  items: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        id: { type: Type.STRING },
+                        time: { type: Type.STRING },
+                        title: { type: Type.STRING, description: "Specific name of the place, e.g. 'The Ritz-Carlton' not 'Hotel'" },
+                        description: { type: Type.STRING },
+                        visualPrompt: { type: Type.STRING },
+                        type: { type: Type.STRING },
+                        costEstimate: { type: Type.STRING },
+                        duration: { type: Type.STRING },
+                        openTime: { type: Type.STRING },
+                        closeTime: { type: Type.STRING },
+                        location: {
+                          type: Type.OBJECT,
+                          properties: {
+                            lat: { type: Type.NUMBER },
+                            lng: { type: Type.NUMBER }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            survivalKit: {
+              type: Type.OBJECT,
+              properties: {
+                essentialApps: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      name: { type: Type.STRING },
+                      purpose: { type: Type.STRING },
+                      icon: { type: Type.STRING, description: "A single emoji representing the app" }
+                    }
+                  }
+                },
+                packingList: { type: Type.ARRAY, items: { type: Type.STRING } },
+                localTips: { type: Type.ARRAY, items: { type: Type.STRING } },
+                budgetEstimate: {
+                  type: Type.OBJECT,
+                  properties: {
+                    currency: { type: Type.STRING },
+                    accommodation: { type: Type.STRING },
+                    food: { type: Type.STRING },
+                    transport: { type: Type.STRING },
+                    totalEstimated: { type: Type.STRING }
+                  }
+                }
+              }
+            }
+          }
+        },
         temperature: 0.1,
-        systemInstruction: "You are a world-class travel curator. You always respond in English, regardless of the destination's native language. You translate all local names to their standard English equivalents."
+        systemInstruction: "You are an elite travel curator. Always provide real geographical coordinates, accurate operating hours, and SPECIFIC, REAL names for all venues and hotels. Use emojis for app icons."
       },
     });
 
-    const text = response.text || "";
-    let result: any = { summary: "", itinerary: [], sources: [] };
-    
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      try {
-        result = JSON.parse(sanitizeJson(jsonMatch[0]));
-      } catch (e) {
-        console.error("JSON Parse Error", e);
-      }
-    }
-
-    // Merge or prioritize sources from JSON (which the model translated)
-    const finalSources = result.sources || [];
-    
-    // If JSON sources are empty, attempt to fallback to grounding chunks (though these might be in local language)
-    if (finalSources.length === 0) {
-      const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-      if (chunks) {
-        chunks.forEach((chunk: any) => {
-          if (chunk.maps?.uri) {
-            finalSources.push({ 
-              uri: chunk.maps.uri, 
-              title: chunk.maps.title || "Map Reference" 
-            });
-          }
-        });
-      }
-    }
-
-    return { ...result, sources: finalSources.length > 0 ? finalSources : undefined };
+    return JSON.parse(response.text || "{}");
   } catch (error: any) {
-    console.error("Generation Error:", error);
+    console.error("Plan generation error:", error);
     throw error;
   }
 };
@@ -110,28 +176,19 @@ export const generatePlan = async (profile: UserProfile, config: TripConfig): Pr
 export const generatePlaceImage = async (placeName: string, visualPrompt: string): Promise<string | null> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
-    const prompt = `A professional, minimalist travel photograph of ${placeName}. ${visualPrompt}. 
-    Soft, diffuse morning light, muted pastel tones, Morandi color palette (sage, slate, mist, sunset). 
-    Clean composition, high-end travel magazine quality, 8k resolution. No text, no watermarks.`;
-
-    const response = await ai.models.generateContent({
+    const prompt = `Travel photo of ${placeName}. ${visualPrompt}. Morandi colors, professional composition.`;
+    const response: GenerateContentResponse = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
-      contents: { 
-        parts: [{ text: prompt }] 
-      },
-      config: {
-        imageConfig: { aspectRatio: "16:9" },
-      }
+      contents: { parts: [{ text: prompt }] },
+      config: { imageConfig: { aspectRatio: "16:9" } }
     });
-
     const part = response.candidates?.[0]?.content.parts.find(p => p.inlineData);
     return part ? `data:image/png;base64,${part.inlineData.data}` : null;
   } catch (e) {
-    console.error("Image Generation Error for", placeName, e);
     return null;
   }
 };
 
 export const generateMoodImage = async (destination: string) => {
-  return generatePlaceImage(destination, `An evocative, wide-angle cinematic overview of ${destination} landscape, peaceful atmosphere.`);
+  return generatePlaceImage(destination, `Cinematic overview of ${destination}.`);
 };
