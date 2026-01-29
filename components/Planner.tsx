@@ -5,7 +5,7 @@ import PastelMap from './PastelMap.tsx';
 import LoadingOverlay from './LoadingOverlay.tsx';
 import SurvivalKit from './SurvivalKit.tsx';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { ShieldAlert, Trash2, Clock, Home, Building, Sparkles, Train, Car, Navigation, HelpCircle, ChevronRight, DollarSign, Timer, MapPin, GripVertical, BookOpen, Compass, ArrowUpRight, ExternalLink } from 'lucide-react';
+import { ShieldAlert, Trash2, Clock, Home, Building, Sparkles, Train, Car, Navigation, HelpCircle, ChevronRight, DollarSign, Timer, MapPin, GripVertical, BookOpen, Compass, ArrowUpRight } from 'lucide-react';
 
 const PlaceThumbnail: React.FC<{ item: ItineraryItem }> = ({ item }) => {
   const [img, setImg] = useState<string | null>(null);
@@ -555,24 +555,24 @@ export default function Planner({ profile }: PlannerProps) {
                                   
                                   <div className="flex flex-col items-end gap-2 mb-2 min-w-0 w-full overflow-hidden">
                                      {/* Metadata Row: Forced Single Line */}
-                                     <div className="flex items-center gap-2 flex-nowrap shrink-0 overflow-x-auto no-scrollbar justify-end w-full pb-1">
+                                     <div className="flex items-center gap-1.5 flex-nowrap shrink-0 overflow-x-auto no-scrollbar justify-end w-full pb-1">
                                         {item.duration && (
-                                          <div className="flex items-center gap-2 text-morandi-sage px-3 py-1.5 bg-morandi-sage/5 rounded-full border border-morandi-sage/10 whitespace-nowrap shrink-0">
+                                          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-morandi-sage/5 text-morandi-sage rounded-full border border-morandi-sage/10 whitespace-nowrap shrink-0">
                                              <Timer className="w-3 h-3" />
-                                             <span className="text-[9px] font-black uppercase tracking-widest">{item.duration}</span>
+                                             <span className="text-[9px] font-black uppercase tracking-wider">{item.duration}</span>
                                           </div>
                                         )}
                                         {item.costEstimate && (
-                                          <div className="flex items-center gap-2 text-morandi-sunset font-bold px-3 py-1.5 bg-morandi-sunset/5 rounded-full border border-morandi-sunset/10 whitespace-nowrap shrink-0">
+                                          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-morandi-sunset/5 text-morandi-sunset font-bold rounded-full border border-morandi-sunset/10 whitespace-nowrap shrink-0">
                                              <DollarSign className="w-3 h-3" />
-                                             <span className="text-[9px] font-black uppercase tracking-widest">{item.costEstimate}</span>
+                                             <span className="text-[9px] font-black uppercase tracking-wider">{item.costEstimate}</span>
                                           </div>
                                         )}
                                         {(item.openTime || item.closeTime) && (
-                                          <div className="flex items-center gap-2 text-morandi-forest px-3 py-1.5 bg-white/50 rounded-full border border-white shadow-sm whitespace-nowrap shrink-0">
+                                          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/50 text-morandi-forest rounded-full border border-white shadow-sm whitespace-nowrap shrink-0">
                                              <Clock className="w-3 h-3 opacity-40" />
-                                             <span className="text-[9px] font-black uppercase tracking-widest">
-                                               {item.openTime || '--'} - {item.closeTime || '--'}
+                                             <span className="text-[9px] font-black uppercase tracking-wider">
+                                               {item.openTime || '--'}-{item.closeTime || '--'}
                                              </span>
                                           </div>
                                         )}
@@ -581,7 +581,7 @@ export default function Planner({ profile }: PlannerProps) {
                                           target="_blank"
                                           rel="noreferrer"
                                           onClick={(e) => e.stopPropagation()}
-                                          className="flex items-center gap-2 px-3 py-1.5 bg-morandi-forest text-white rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap shrink-0 hover:bg-morandi-forest/80 transition-colors shadow-sm"
+                                          className="flex items-center gap-1.5 px-2.5 py-1 bg-morandi-forest text-white rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap shrink-0 hover:bg-morandi-forest/80 transition-colors shadow-sm"
                                         >
                                           <MapPin className="w-3 h-3" />
                                           MAP
@@ -591,7 +591,7 @@ export default function Planner({ profile }: PlannerProps) {
                                             e.stopPropagation();
                                             handleDeleteItem(item.id);
                                           }}
-                                          className="p-2 text-morandi-forest/10 hover:text-red-400 hover:bg-red-50/50 rounded-full transition-all shrink-0"
+                                          className="p-1.5 text-morandi-forest/10 hover:text-red-400 hover:bg-red-50/50 rounded-full transition-all shrink-0"
                                           title="Remove from itinerary"
                                         >
                                           <Trash2 className="w-3.5 h-3.5" />
