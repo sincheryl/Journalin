@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { UserProfile, TripConfig, DayPlan, ItineraryItem, InquiryResult, InquiryQuestion, SurvivalKit as SurvivalKitType } from '../types.ts';
 import { generatePlan, generateMoodImage, generatePlaceImage, checkPlanFeasibility } from '../services/geminiService.ts';
@@ -6,7 +5,7 @@ import PastelMap from './PastelMap.tsx';
 import LoadingOverlay from './LoadingOverlay.tsx';
 import SurvivalKit from './SurvivalKit.tsx';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { ShieldAlert, Trash2, Clock, Home, Building, Sparkles, Train, Car, Navigation, HelpCircle, ChevronRight, DollarSign, Timer, MapPin, GripVertical, BookOpen, Compass, ArrowUpRight, Loader2, Wand2 } from 'lucide-react';
+import { ShieldAlert, Trash2, Clock, Home, Building, Sparkles, Train, Car, Navigation, HelpCircle, ChevronRight, DollarSign, Timer, MapPin, GripVertical, BookOpen, Compass, ArrowUpRight } from 'lucide-react';
 
 const PlaceThumbnail: React.FC<{ item: ItineraryItem }> = ({ item }) => {
   const [img, setImg] = useState<string | null>(null);
@@ -102,7 +101,6 @@ export default function Planner({ profile }: PlannerProps) {
   });
   
   const [loading, setLoading] = useState(false);
-  const [isChecking, setIsChecking] = useState(false);
   const [plan, setPlan] = useState<DayPlan[] | null>(null);
   const [summary, setSummary] = useState('');
   const [survivalKit, setSurvivalKit] = useState<SurvivalKitType | null>(null);
@@ -137,18 +135,14 @@ export default function Planner({ profile }: PlannerProps) {
     });
   };
 
-  const isInquiryComplete = useMemo(() => {
-    return Object.keys(inquiryAnswers).length >= (inquiryData?.questions?.length || 0);
-  }, [inquiryAnswers, inquiryData]);
-
   const startAnalysis = async () => {
-    if (!config.destination || isChecking) return;
-    setIsChecking(true);
+    if (!config.destination) return;
+    setLoading(true);
     try {
       const result = await checkPlanFeasibility(profile, config);
       if (result.needInquiry && result.questions && result.questions.length > 0) {
         setInquiryData(result);
-        setIsChecking(false);
+        setLoading(false);
       } else {
         await handleGenerate();
       }
@@ -160,7 +154,6 @@ export default function Planner({ profile }: PlannerProps) {
 
   const handleGenerate = async () => {
     setLoading(true);
-    setIsChecking(false);
     setInquiryData(null);
     setMoodImage(null);
     setActiveView('journal');
@@ -241,20 +234,18 @@ export default function Planner({ profile }: PlannerProps) {
             >
               <div className="w-12 h-1 bg-morandi-forest/10 rounded-full mx-auto md:hidden" />
               <div className="flex items-center gap-4 text-morandi-forest">
-                <div className="p-3 bg-morandi-forest/5 rounded-2xl">
-                    <HelpCircle className="w-6 h-6 md:w-8 md:h-8 opacity-40" />
-                </div>
+                <HelpCircle className="w-8 h-8 opacity-40" />
                 <div>
                   <h3 className="text-2xl md:text-3xl font-serif">Curator's Inquiry</h3>
                   <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Ensuring Logical Harmony</p>
                 </div>
               </div>
               
-              <div className="p-5 md:p-8 bg-morandi-forest/[0.03] rounded-3xl border border-morandi-forest/5 italic text-morandi-forest/70 text-sm md:text-base leading-relaxed">
+              <div className="p-4 md:p-6 bg-morandi-forest/5 rounded-3xl border border-morandi-forest/5 italic text-morandi-forest/70 text-sm">
                 "{inquiryData.reason}"
               </div>
 
-              <div className="space-y-8 md:space-y-12">
+              <div className="space-y-8 md:space-y-10">
                 {inquiryData.questions?.map((q) => (
                   <div key={q.id} className="space-y-4 md:space-y-6">
                     <p className="text-lg md:text-xl font-serif text-morandi-forest leading-snug">{q.question}</p>
@@ -263,16 +254,10 @@ export default function Planner({ profile }: PlannerProps) {
                         <button
                           key={opt}
                           onClick={() => setInquiryAnswers(prev => ({ ...prev, [q.id]: opt }))}
-                          className={`flex items-center justify-between px-6 md:px-8 py-4 md:py-5 rounded-3xl border-2 transition-all ${inquiryAnswers[q.id] === opt ? 'bg-morandi-forest text-white border-morandi-forest shadow-lg scale-[1.01]' : 'bg-white/40 border-white/40 text-morandi-forest hover:bg-white hover:border-morandi-forest/10'}`}
+                          className={`flex items-center justify-between px-6 md:px-8 py-4 md:py-5 rounded-3xl border-2 transition-all ${inquiryAnswers[q.id] === opt ? 'bg-morandi-forest text-white border-morandi-forest shadow-lg' : 'bg-white/40 border-white/40 text-morandi-forest hover:bg-white'}`}
                         >
                           <span className="font-bold text-sm">{opt}</span>
-                          <AnimatePresence>
-                            {inquiryAnswers[q.id] === opt && (
-                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                                    <ChevronRight className="w-4 h-4" />
-                                </motion.div>
-                            )}
-                          </AnimatePresence>
+                          {inquiryAnswers[q.id] === opt && <ChevronRight className="w-4 h-4" />}
                         </button>
                       ))}
                     </div>
@@ -280,59 +265,20 @@ export default function Planner({ profile }: PlannerProps) {
                 ))}
               </div>
 
-              <div className="flex flex-col md:flex-row gap-4 pt-4 md:pt-8 border-t border-morandi-forest/5">
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+              <div className="flex flex-col md:flex-row gap-4 pt-4">
+                <button 
                   onClick={() => setInquiryData(null)}
-                  className="w-full py-4 md:py-6 rounded-3xl border border-morandi-forest/10 font-black text-[10px] uppercase tracking-[0.2em] text-morandi-forest/60 hover:text-morandi-forest transition-all glass-panel"
+                  className="w-full py-4 md:py-6 rounded-3xl border border-morandi-forest/10 font-black text-[10px] uppercase tracking-widest text-morandi-forest opacity-40 hover:opacity-100 transition-all"
                 >
                   Adjust Config
-                </motion.button>
-                <motion.button 
-                  layout
+                </button>
+                <button 
                   onClick={handleGenerate}
-                  disabled={!isInquiryComplete}
-                  whileHover={isInquiryComplete ? { scale: 1.02, boxShadow: "0 20px 40px -10px rgba(9, 47, 38, 0.3)" } : {}}
-                  whileTap={isInquiryComplete ? { scale: 0.98 } : {}}
-                  className={`w-full md:flex-[2] py-4 md:py-6 rounded-3xl font-black text-[10px] md:text-xs uppercase tracking-[0.3em] shadow-2xl transition-all flex items-center justify-center gap-3 overflow-hidden relative ${isInquiryComplete ? 'bg-morandi-forest text-white opacity-100' : 'bg-morandi-forest/10 text-morandi-forest/20 cursor-not-allowed shadow-none'}`}
+                  disabled={Object.keys(inquiryAnswers).length < (inquiryData.questions?.length || 0)}
+                  className="w-full md:flex-[2] py-4 md:py-6 bg-morandi-forest text-white rounded-3xl font-black text-[10px] md:text-xs uppercase tracking-widest shadow-2xl disabled:opacity-20 transition-all"
                 >
-                  <AnimatePresence mode="wait">
-                    {isInquiryComplete ? (
-                      <motion.div 
-                        key="ready"
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -15 }}
-                        className="flex items-center gap-3"
-                      >
-                        <Wand2 className="w-4 h-4 animate-pulse text-morandi-sunset" />
-                        <span>Commence Synthesis</span>
-                      </motion.div>
-                    ) : (
-                      <motion.div 
-                        key="pending"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="flex items-center gap-3"
-                      >
-                        <Loader2 className="w-4 h-4 opacity-40 animate-spin" />
-                        <span className="opacity-40 italic">Awaiting Input...</span>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  
-                  {/* Subtle highlight effect for ready state */}
-                  {isInquiryComplete && (
-                    <motion.div 
-                        initial={{ x: '-100%' }}
-                        animate={{ x: '100%' }}
-                        transition={{ repeat: Infinity, duration: 3, ease: 'linear' }}
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none"
-                    />
-                  )}
-                </motion.button>
+                  Proceed to Generation
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -357,7 +303,7 @@ export default function Planner({ profile }: PlannerProps) {
               </header>
 
               <div 
-                className={`glass-panel p-8 md:p-16 rounded-4xl md:rounded-[64px] shadow-2xl space-y-8 md:space-y-12 border-white/40 relative overflow-hidden transition-all duration-700 ${isChecking ? 'opacity-60 saturate-0 scale-[0.99]' : 'opacity-100'}`}
+                className="glass-panel p-8 md:p-16 rounded-4xl md:rounded-[64px] shadow-2xl space-y-8 md:space-y-12 border-white/40 relative overflow-hidden"
                 style={paperBackgroundStyle}
               >
                 <div className="absolute left-6 md:left-14 top-0 bottom-0 w-[1px] bg-red-200/50 z-0 pointer-events-none" />
@@ -424,6 +370,7 @@ export default function Planner({ profile }: PlannerProps) {
                     </div>
                   </div>
 
+                  {/* Restored Accommodation and Transport Selection */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                     <div className="space-y-4 md:space-y-6">
                       <label className="text-[10px] md:text-[11px] font-black text-morandi-forest uppercase tracking-[0.3em] md:tracking-[0.4em] opacity-40">Accommodation</label>
@@ -476,46 +423,13 @@ export default function Planner({ profile }: PlannerProps) {
                     />
                   </div>
 
-                  <motion.button 
-                    layout
+                  <button 
                     onClick={startAnalysis}
-                    disabled={loading || isChecking || !config.destination}
-                    className={`w-full py-6 md:py-10 rounded-3xl md:rounded-[40px] font-black text-xl md:text-2xl shadow-2xl transition-all relative overflow-hidden flex items-center justify-center gap-4 ${isChecking ? 'bg-morandi-sunset text-white' : 'bg-morandi-forest text-morandi-mist hover:bg-morandi-forest/90'}`}
+                    disabled={loading || !config.destination}
+                    className="w-full py-6 md:py-10 bg-morandi-forest text-morandi-mist rounded-3xl md:rounded-[40px] font-black text-xl md:text-2xl shadow-2xl hover:bg-morandi-forest/90 transition-all disabled:opacity-20 tracking-tight"
                   >
-                    <AnimatePresence mode="wait">
-                      {isChecking ? (
-                        <motion.div 
-                          key="checking"
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 1.1 }}
-                          className="flex items-center gap-4"
-                        >
-                          <Loader2 className="w-6 h-6 md:w-8 md:h-8 animate-spin" />
-                          <span className="tracking-tight italic font-serif">Reading Config...</span>
-                        </motion.div>
-                      ) : (
-                        <motion.span 
-                          key="ready"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="tracking-tight"
-                        >
-                          Create Journal Entry
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                    {isChecking && (
-                      <motion.div 
-                        layoutId="btn-progress"
-                        className="absolute bottom-0 left-0 h-1.5 bg-white/40"
-                        initial={{ width: 0 }}
-                        animate={{ width: '100%' }}
-                        transition={{ duration: 2, ease: "easeInOut" }}
-                      />
-                    )}
-                  </motion.button>
+                    Create Journal Entry
+                  </button>
                 </div>
               </div>
             </div>
