@@ -5,7 +5,7 @@ import PastelMap from './PastelMap.tsx';
 import LoadingOverlay from './LoadingOverlay.tsx';
 import SurvivalKit from './SurvivalKit.tsx';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { ShieldAlert, Trash2, Clock, Home, Building, Sparkles, Train, Car, Navigation, HelpCircle, ChevronRight, DollarSign, Timer, MapPin, GripVertical, BookOpen, Compass, ArrowUpRight } from 'lucide-react';
+import { ShieldAlert, StarHalf, Clock, Home, Building, Sparkles, Train, Car, Navigation, HelpCircle, ChevronRight, DollarSign, Timer, MapPin, GripVertical, BookOpen, Compass, Footprints, Trash2 } from 'lucide-react';
 
 const PlaceThumbnail: React.FC<{ item: ItineraryItem }> = ({ item }) => {
   const [img, setImg] = useState<string | null>(null);
@@ -118,12 +118,6 @@ export default function Planner({ profile }: PlannerProps) {
     const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     return Math.max(1, diff + 1);
   }, [config.startDate, config.endDate]);
-
-  const handleDurationChange = (newDuration: number) => {
-    const start = new Date(config.startDate);
-    const end = new Date(start.getTime() + (newDuration - 1) * 86400000);
-    setConfig({ ...config, endDate: end.toISOString().split('T')[0] });
-  };
 
   const toggleSafety = (key: keyof typeof config.safetyToggles) => {
     setConfig({
@@ -310,48 +304,73 @@ export default function Planner({ profile }: PlannerProps) {
                 
                 <div className="relative z-10 space-y-8 md:space-y-12">
                   <div className="space-y-6 md:space-y-10">
-                    <div className="space-y-2 md:space-y-4">
-                      <label className="text-[10px] md:text-[11px] font-black text-morandi-forest uppercase tracking-[0.3em] md:tracking-[0.4em] opacity-40">Destination</label>
-                      <input 
-                        type="text" 
-                        value={config.destination}
-                        onChange={(e) => setConfig({...config, destination: e.target.value})}
-                        placeholder="Where to?"
-                        className="w-full bg-transparent border-b-[2px] md:border-b-[3px] border-morandi-forest/10 py-2 md:py-4 text-3xl md:text-6xl font-serif text-morandi-forest focus:border-morandi-sunset outline-none transition-all placeholder:opacity-20 tracking-tight"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
-                      <div className="space-y-2 md:space-y-4">
-                        <label className="text-[10px] md:text-[11px] font-black text-morandi-forest uppercase tracking-[0.3em] md:tracking-[0.4em] opacity-40">Start Date</label>
+                    <div className="flex flex-row gap-4 md:gap-12 w-full">
+                      <div className="space-y-2 md:space-y-4 flex-[3]">
+                        <label className="text-[10px] md:text-[11px] font-black text-morandi-forest uppercase tracking-[0.3em] md:tracking-[0.4em] opacity-40">Destination</label>
                         <input 
-                          type="date" 
-                          value={config.startDate}
-                          onChange={(e) => setConfig({...config, startDate: e.target.value})}
-                          className="w-full bg-white/40 border border-white/60 rounded-3xl px-6 md:px-8 py-4 md:py-6 font-bold text-sm text-morandi-forest outline-none focus:ring-4 ring-morandi-sunset/10"
+                          type="text" 
+                          value={config.destination}
+                          onChange={(e) => setConfig({...config, destination: e.target.value})}
+                          placeholder="Where to?"
+                          className="w-full bg-transparent border-b-[2px] md:border-b-[3px] border-morandi-forest/10 py-2 md:py-4 text-2xl md:text-6xl font-serif text-morandi-forest focus:border-morandi-sunset outline-none transition-all placeholder:opacity-20 tracking-tight"
                         />
                       </div>
+                      <div className="space-y-2 md:space-y-4 flex-[1.2] md:flex-[1]">
+                        <label className="text-[10px] md:text-[11px] font-black text-morandi-forest uppercase tracking-[0.3em] md:tracking-[0.4em] opacity-40 text-center block">Passengers</label>
+                        <input 
+                          type="number" 
+                          min="1"
+                          max="20"
+                          value={config.passengers}
+                          onChange={(e) => setConfig({...config, passengers: parseInt(e.target.value) || 1})}
+                          className="w-full bg-transparent border-b-[2px] md:border-b-[3px] border-morandi-forest/10 py-2 md:py-4 text-2xl md:text-6xl font-serif text-morandi-forest focus:border-morandi-sunset outline-none transition-all text-center"
+                        />
+                      </div>
+                    </div>
 
-                      <div className="space-y-2 md:space-y-4">
-                        <label className="text-[10px] md:text-[11px] font-black text-morandi-forest uppercase tracking-[0.3em] md:tracking-[0.4em] opacity-40">Length of Stay</label>
-                        <div className="flex items-center gap-4 md:gap-6 bg-white/40 border border-white/60 rounded-3xl px-4 md:px-6 py-3 md:py-4">
-                          <button onClick={() => handleDurationChange(Math.max(1, stayDuration - 1))} className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-2xl bg-white text-morandi-forest active:scale-90 transition-all shadow-lg hover:bg-morandi-forest hover:text-white">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18 12H6" strokeWidth="4" strokeLinecap="round"/></svg>
-                          </button>
-                          <span className="flex-1 text-center font-black text-xl md:text-2xl text-morandi-forest">{stayDuration} <span className="text-[8px] md:text-[10px] uppercase opacity-40 ml-1">Days</span></span>
-                          <button onClick={() => handleDurationChange(stayDuration + 1)} className="w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-2xl bg-white text-morandi-forest active:scale-90 transition-all shadow-lg hover:bg-morandi-forest hover:text-white">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6v12M6 12h12" strokeWidth="4" strokeLinecap="round"/></svg>
-                          </button>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-6 md:gap-10">
+                        <div className="space-y-2 md:space-y-4">
+                          <label className="text-[10px] md:text-[11px] font-black text-morandi-forest uppercase tracking-[0.3em] md:tracking-[0.4em] opacity-40">Start Date</label>
+                          <input 
+                            type="date" 
+                            value={config.startDate}
+                            onChange={(e) => setConfig({...config, startDate: e.target.value})}
+                            className="w-full bg-white/40 border border-white/60 rounded-3xl px-4 md:px-8 py-4 md:py-6 font-bold text-sm text-morandi-forest outline-none focus:ring-4 ring-morandi-sunset/10"
+                          />
                         </div>
+
+                        <div className="space-y-2 md:space-y-4">
+                          <label className="text-[10px] md:text-[11px] font-black text-morandi-forest uppercase tracking-[0.3em] md:tracking-[0.4em] opacity-40">End Date</label>
+                          <input 
+                            type="date" 
+                            value={config.endDate}
+                            onChange={(e) => setConfig({...config, endDate: e.target.value})}
+                            className="w-full bg-white/40 border border-white/60 rounded-3xl px-4 md:px-8 py-4 md:py-6 font-bold text-sm text-morandi-forest outline-none focus:ring-4 ring-morandi-sunset/10"
+                          />
+                        </div>
+                      </div>
+                      <div className="pl-2">
+                        <span className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.2em] text-morandi-forest opacity-40 flex items-center gap-1.5">
+                          Length of stay: <span className="text-morandi-forest font-black text-sm md:text-base opacity-100">{stayDuration}</span> Days
+                        </span>
                       </div>
                     </div>
                   </div>
 
+                  {/* New Travel Preferences Heading */}
+                  <div className="pt-8 pb-4">
+                    <h2 className="text-3xl md:text-5xl font-serif text-morandi-forest tracking-tighter leading-tight">
+                      What are your travel preferences for this trip?
+                    </h2>
+                  </div>
+
+                  {/* Scam Shield Section */}
                   <div className="space-y-4 md:space-y-6">
-                    <label className="text-[10px] md:text-[11px] font-black text-morandi-forest uppercase tracking-[0.3em] md:tracking-[0.4em] opacity-40">Safety Toggles</label>
+                    <label className="text-[10px] md:text-[11px] font-black text-morandi-forest uppercase tracking-[0.3em] md:tracking-[0.4em] opacity-40">Scam Shield</label>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                       {[
-                        { key: 'filterShredder', icon: Trash2, label: 'Filter Shredder', sub: 'Low-rated traps' },
+                        { key: 'filterShredder', icon: StarHalf, label: 'Filter Shredder', sub: 'Low-rated traps' },
                         { key: 'bbGuard', icon: ShieldAlert, label: 'B&B Guard', sub: 'Poor accommodations' },
                         { key: 'noQueueMode', icon: Clock, label: 'No-Queue Mode', sub: 'Spots < 30m wait' }
                       ].map((toggle) => (
@@ -370,43 +389,52 @@ export default function Planner({ profile }: PlannerProps) {
                     </div>
                   </div>
 
-                  {/* Restored Accommodation and Transport Selection */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+                    {/* Accommodation - Slider Form (Segmented Control) */}
                     <div className="space-y-4 md:space-y-6">
                       <label className="text-[10px] md:text-[11px] font-black text-morandi-forest uppercase tracking-[0.3em] md:tracking-[0.4em] opacity-40">Accommodation</label>
-                      <div className="space-y-3">
-                        {[
-                          { name: 'Hostel/Capsule', icon: Home, value: 'Hostel' },
-                          { name: 'Budget Hotel', icon: Building, value: 'Budget Hotel' },
-                          { name: 'Luxury/Boutique', icon: Sparkles, value: 'Luxury/Boutique' }
+                      <div className="relative bg-white/40 p-1 rounded-full border-2 border-white/40 flex items-center h-14 md:h-16 overflow-hidden">
+                         {[
+                          { name: 'Hostel', icon: Home, value: 'Hostel' },
+                          { name: 'Budget', icon: Building, value: 'Budget Hotel' },
+                          { name: 'Luxury', icon: Sparkles, value: 'Luxury/Boutique' }
                         ].map((acc) => (
                           <button
                             key={acc.name}
                             onClick={() => setConfig({...config, accommodation: acc.value as any})}
-                            className={`w-full flex items-center gap-4 p-4 rounded-3xl border-2 transition-all ${config.accommodation === acc.value ? 'bg-morandi-forest text-white border-morandi-forest shadow-lg scale-[1.02]' : 'bg-white/40 border-white/40 text-morandi-forest/60 hover:bg-white'}`}
+                            className={`relative flex-1 h-full z-10 flex items-center justify-center gap-2 transition-colors duration-500 ${config.accommodation === acc.value ? 'text-white' : 'text-morandi-forest/60'}`}
                           >
-                            <acc.icon className="w-5 h-5" />
-                            <span className="font-bold text-sm tracking-tight">{acc.name}</span>
+                            {config.accommodation === acc.value && (
+                              <motion.div 
+                                layoutId="acc-slider-bg" 
+                                className="absolute inset-0 bg-morandi-forest rounded-full -z-10"
+                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                              />
+                            )}
+                            <acc.icon className="w-4 h-4" />
+                            <span className="font-bold text-[10px] md:text-xs tracking-tight uppercase">{acc.name}</span>
                           </button>
                         ))}
                       </div>
                     </div>
 
+                    {/* Transport - 4-grid layout */}
                     <div className="space-y-4 md:space-y-6">
                       <label className="text-[10px] md:text-[11px] font-black text-morandi-forest uppercase tracking-[0.3em] md:tracking-[0.4em] opacity-40">Transport</label>
-                      <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3 md:gap-4">
                         {[
-                          { name: 'Public Transit', icon: Train, value: 'Public Transit' },
-                          { name: 'Rental Car', icon: Car, value: 'Rental Car' },
-                          { name: 'Ride-hailing', icon: Navigation, value: 'Ride-hailing' }
+                          { name: 'Transit', icon: Train, value: 'Public Transit' },
+                          { name: 'Rental', icon: Car, value: 'Rental Car' },
+                          { name: 'Ride', icon: Navigation, value: 'Ride-hailing' },
+                          { name: 'Walking', icon: Footprints, value: 'Walk-Friendly' }
                         ].map((tr) => (
                           <button
                             key={tr.name}
                             onClick={() => setConfig({...config, transport: tr.value as any})}
-                            className={`w-full flex items-center gap-4 p-4 rounded-3xl border-2 transition-all ${config.transport === tr.value ? 'bg-morandi-forest text-white border-morandi-forest shadow-lg scale-[1.02]' : 'bg-white/40 border-white/40 text-morandi-forest/60 hover:bg-white'}`}
+                            className={`flex items-center gap-3 p-4 rounded-3xl border-2 transition-all ${config.transport === tr.value ? 'bg-morandi-forest text-white border-morandi-forest shadow-lg' : 'bg-white/40 border-white/40 text-morandi-forest/60 hover:bg-white'}`}
                           >
-                            <tr.icon className="w-5 h-5" />
-                            <span className="font-bold text-sm tracking-tight">{tr.name}</span>
+                            <tr.icon className="w-4 h-4 shrink-0" />
+                            <span className="font-bold text-[10px] md:text-xs tracking-tight uppercase whitespace-nowrap">{tr.name}</span>
                           </button>
                         ))}
                       </div>
