@@ -12,7 +12,8 @@ export enum BudgetType {
 }
 
 export type Interest = 'Urban' | 'Citywalk' | 'Food' | 'Culture' | 'Nature' | 'Shopping';
-export type FoodPreference = 'Spicy' | 'Sweet' | 'Vegetarian';
+// Added 'Local' to FoodPreference to resolve the type error in Onboarding.tsx line 21
+export type FoodPreference = 'Spicy' | 'Sweet' | 'Vegetarian' | 'Local';
 
 export interface UserProfile {
   chronotype: Chronotype;
