@@ -67,6 +67,10 @@ export interface ItineraryItem {
   closeTime?: string;
   url?: string;
   imageUrl?: string;
+  startTime?: string;
+  endTime?: string;
+  conflict?: boolean;
+  durationMinutes?: number;
 }
 
 export interface DayPlan {
@@ -100,4 +104,26 @@ export interface GenerationResult {
   summary: string;
   survivalKit: SurvivalKit;
   sources?: { uri: string; title: string }[];
+}
+
+export type RiskSeverity = 'low' | 'medium' | 'high';
+export type RiskType = 'time_conflict' | 'fatigue' | 'travel' | 'closure' | 'other';
+
+export interface ItineraryRiskItem {
+  itemId: string;
+  title: string;
+  severity: RiskSeverity;
+  reason: string;
+  type: RiskType;
+}
+
+export interface ItineraryRiskResult {
+  shouldWarn: boolean;
+  summary: string;
+  fatigueScore?: number;
+  totalActiveMinutes?: number;
+  suggestions?: string[];
+  itemRisks?: ItineraryRiskItem[];
+  updatedItems?: ItineraryItem[];
+  conflicts?: string[];
 }
