@@ -419,10 +419,16 @@ export default function Planner({ profile }: PlannerProps) {
     });
   };
 
-  const updateDayStart = (date: string, minutesDelta: number) => {
-    const current = dayStartTimes[date] ?? DEFAULT_DAY_START;
-    const baseMinutes = parseTimeToMinutes(current) ?? 9 * 60;
-    const nextTime = formatMinutesToTime(baseMinutes + minutesDelta);
+  const updateDayStart = (date: string, value: string | number) => {
+    let nextTime: string;
+    if (typeof value === 'string') {
+      nextTime = value;
+    } else {
+      const current = dayStartTimes[date] ?? DEFAULT_DAY_START;
+      const baseMinutes = parseTimeToMinutes(current) ?? 9 * 60;
+      nextTime = formatMinutesToTime(baseMinutes + value);
+    }
+    
     setDayStartTimes(prev => ({ ...prev, [date]: nextTime }));
     const day = plan?.find(d => d.date === date);
     if (day) {
@@ -991,162 +997,172 @@ export default function Planner({ profile }: PlannerProps) {
           >
             <div className={`flex-1 transition-all duration-700 ease-in-out overflow-y-auto custom-scrollbar p-6 md:p-12 lg:p-24 bg-morandi-mist pb-32 md:pb-40`}>
               <div className={`mx-auto space-y-16 md:space-y-24 max-w-2xl`}>
-                <AnimatePresence mode="wait">
-                  {activeView === 'journal' ? (
-                    <motion.div
-                      key="journal-view"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ duration: 0.5 }}
-                      className="space-y-16 md:space-y-24"
-                    >
-                      <div className="flex items-center justify-between border-b border-morandi-forest/5 pb-8 md:pb-16">
-                        <div className="space-y-1 md:space-y-3">
-                          <h2 className="text-3xl md:text-5xl font-serif text-morandi-forest tracking-tighter leading-none">The Journal.</h2>
-                          <p className="text-[8px] md:text-[11px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] text-morandi-forest/30 italic">CURATED ATMOSPHERE</p>
-                        </div>
-                        <button 
-                          onClick={() => {
-                            setLoading(false);
-                            setActiveView('journal');
-                            setIsSetupView(true);
-                          }} 
-                          className="px-6 md:px-10 py-3 md:py-4 glass-panel rounded-full text-[8px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-morandi-forest/60 hover:text-morandi-forest border-white/60 transition-all shadow-md pointer-events-auto relative z-[50]"
-                        >
-                          Draft New
-                        </button>
+                {activeView === 'journal' && (
+                  <motion.div
+                    key="journal-view"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                    className="space-y-16 md:space-y-24"
+                  >
+                    <div className="flex items-center justify-between border-b border-morandi-forest/5 pb-8 md:pb-16">
+                      <div className="space-y-1 md:space-y-3">
+                        <h2 className="text-3xl md:text-5xl font-serif text-morandi-forest tracking-tighter leading-none">The Journal.</h2>
+                        <p className="text-[8px] md:text-[11px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] text-morandi-forest/30 italic">CURATED ATMOSPHERE</p>
                       </div>
+                      <button 
+                        onClick={() => {
+                          setLoading(false);
+                          setActiveView('journal');
+                          setIsSetupView(true);
+                        }} 
+                        className="px-6 md:px-10 py-3 md:py-4 glass-panel rounded-full text-[8px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-morandi-forest/60 hover:text-morandi-forest border-white/60 transition-all shadow-md pointer-events-auto relative z-[50]"
+                      >
+                        Draft New
+                      </button>
+                    </div>
 
-                      <div className="relative h-[240px] md:h-[420px] rounded-4xl md:rounded-[72px] overflow-hidden shadow-2xl border-[16px] md:border-[24px] border-white bg-white group">
-                        {moodImage ? (
-                          <img src={moodImage} alt={config.destination} className="w-full h-full object-cover transition-transform duration-[6s] group-hover:scale-110" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-morandi-forest/5"><div className="w-8 h-8 md:w-12 md:h-12 border-4 border-morandi-forest/10 border-t-morandi-forest rounded-full animate-spin" /></div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-morandi-forest/90 via-morandi-forest/30 to-transparent" />
-                        <div className="absolute bottom-8 md:bottom-16 left-6 md:left-12 right-6 md:right-12 text-morandi-mist">
-                          <span className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.5em] md:tracking-[0.7em] opacity-60 mb-2 md:mb-4 block">DESTINATION OVERVIEW</span>
-                          <h2 className="text-4xl md:text-7xl lg:text-8xl font-serif mb-4 md:mb-6 leading-none tracking-tighter">{config.destination}</h2>
-                        </div>
+                    <div className="relative h-[240px] md:h-[420px] rounded-4xl md:rounded-[72px] overflow-hidden shadow-2xl border-[16px] md:border-[24px] border-white bg-white group">
+                      {moodImage ? (
+                        <img src={moodImage} alt={config.destination} className="w-full h-full object-cover transition-transform duration-[6s] group-hover:scale-110" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-morandi-forest/5"><div className="w-8 h-8 md:w-12 md:h-12 border-4 border-morandi-forest/10 border-t-morandi-forest rounded-full animate-spin" /></div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-morandi-forest/90 via-morandi-forest/30 to-transparent" />
+                      <div className="absolute bottom-8 md:bottom-16 left-6 md:left-12 right-6 md:right-12 text-morandi-mist">
+                        <span className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.5em] md:tracking-[0.7em] opacity-60 mb-2 md:mb-4 block">DESTINATION OVERVIEW</span>
+                        <h2 className="text-4xl md:text-7xl lg:text-8xl font-serif mb-4 md:mb-6 leading-none tracking-tighter">{config.destination}</h2>
                       </div>
+                    </div>
 
-                      <div className="sticky top-4 z-40 flex justify-center w-full pointer-events-none px-4">
-                        <div className="bg-white/80 backdrop-blur-3xl px-2 py-1.5 md:px-3 md:py-2 rounded-full border border-white/60 shadow-xl flex gap-1 md:gap-2 pointer-events-auto overflow-x-auto no-scrollbar max-w-full snap-x snap-mandatory scroll-smooth">
-                          {plan?.map((day, idx) => (
-                            <button
-                              key={day.date}
-                              onClick={() => setActiveDate(day.date)}
-                              className={`relative px-4 md:px-8 py-2 md:py-3 rounded-full transition-all duration-500 whitespace-nowrap flex-shrink-0 snap-center ${activeDate === day.date ? 'shadow-lg scale-105' : 'opacity-40 hover:opacity-100'}`}
+                    <div className="sticky top-4 z-40 flex justify-center w-full pointer-events-none px-4">
+                      <div className="bg-white/80 backdrop-blur-3xl px-2 py-1.5 md:px-3 md:py-2 rounded-full border border-white/60 shadow-xl flex gap-1 md:gap-2 pointer-events-auto overflow-x-auto no-scrollbar max-w-full snap-x snap-mandatory scroll-smooth">
+                        {plan?.map((day, idx) => (
+                          <button
+                            key={day.date}
+                            onClick={() => setActiveDate(day.date)}
+                            className={`relative px-4 md:px-8 py-2 md:py-3 rounded-full transition-all duration-500 whitespace-nowrap flex-shrink-0 snap-center ${activeDate === day.date ? 'shadow-lg scale-105' : 'opacity-40 hover:opacity-100'}`}
+                          >
+                            {activeDate === day.date && (
+                              <motion.div layoutId="date-bg" className="absolute inset-0 bg-morandi-forest rounded-full z-0" />
+                            )}
+                            <div className="relative z-10 flex flex-col items-center min-w-[40px] md:min-w-[60px]">
+                              <span className={`text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] mb-0.5 transition-colors ${activeDate === day.date ? 'text-white/40' : 'text-morandi-forest/30'}`}>
+                                DAY 0{idx + 1}
+                              </span>
+                              <span className={`text-[10px] md:text-[12px] font-bold tracking-tight transition-colors ${activeDate === day.date ? 'text-white' : 'text-morandi-forest'}`}>
+                                {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mt-8 md:mt-20">
+                      <Reorder.Group axis="y" values={activeItems} onReorder={handleReorder} className="space-y-24 md:space-y-40">
+                        <AnimatePresence mode="popLayout">
+                          {activeItems.map((item) => (
+                            <Reorder.Item 
+                              key={item.id} 
+                              value={item}
+                              initial={{ opacity: 0, y: 50 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.9, x: -50 }}
+                              transition={{ duration: 0.6 }}
+                              className="flex flex-col gap-8 md:gap-12 cursor-grab active:cursor-grabbing bg-transparent relative group"
                             >
-                              {activeDate === day.date && (
-                                <motion.div layoutId="date-bg" className="absolute inset-0 bg-morandi-forest rounded-full z-0" />
-                              )}
-                              <div className="relative z-10 flex flex-col items-center min-w-[40px] md:min-w-[60px]">
-                                <span className={`text-[7px] md:text-[8px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] mb-0.5 transition-colors ${activeDate === day.date ? 'text-white/40' : 'text-morandi-forest/30'}`}>
-                                  DAY 0{idx + 1}
-                                </span>
-                                <span className={`text-[10px] md:text-[12px] font-bold tracking-tight transition-colors ${activeDate === day.date ? 'text-white' : 'text-morandi-forest'}`}>
-                                  {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                </span>
+                              <div className="absolute -left-10 md:left-[-64px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-morandi-forest/20 hidden md:block">
+                                <GripVertical className="w-8 md:w-10 h-8 md:h-10" />
                               </div>
-                            </button>
+
+                              <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-morandi-forest/5 pb-4 md:pb-8 relative gap-4">
+                                <div className="relative shrink-0 flex items-center md:block">
+                                   <span className="text-7xl md:text-[11rem] font-serif text-morandi-forest/5 md:absolute md:top-[-64px] md:left-[-48px] select-none group-hover:text-morandi-forest/10 transition-all duration-1000 pointer-events-none md:block hidden">{item.time}</span>
+                                   <span className="text-5xl md:text-8xl font-serif text-morandi-forest relative z-10 drop-shadow-sm tracking-tighter leading-none">{item.time}</span>
+                                </div>
+                                
+                                <div className="flex flex-col md:items-end gap-1.5 md:gap-2 mb-1 md:mb-2 min-w-0 w-full overflow-hidden">
+                                   <div className="flex items-center gap-1 flex-nowrap shrink-0 overflow-x-auto no-scrollbar md:justify-end w-full pb-1">
+                                      {item.duration && (
+                                        <div className="flex items-center gap-1 md:gap-1.5 px-2 md:px-2.5 py-0.5 md:py-1 bg-morandi-sage/5 text-morandi-sage rounded-full border border-morandi-sage/10 whitespace-nowrap shrink-0">
+                                           <Timer className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                                           <span className="text-[8px] md:text-[9px] font-black uppercase tracking-wider">{item.duration}</span>
+                                        </div>
+                                      )}
+                                      {item.costEstimate && (
+                                        <div className="flex items-center gap-1 md:gap-1.5 px-2 md:px-2.5 py-0.5 md:py-1 bg-morandi-sunset/5 text-morandi-sunset font-bold rounded-full border border-morandi-sunset/10 whitespace-nowrap shrink-0">
+                                           <DollarSign className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                                           <span className="text-[8px] md:text-[9px] font-black uppercase tracking-wider">{item.costEstimate}</span>
+                                        </div>
+                                      )}
+                                      <a 
+                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.title}, ${config.destination}`)}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex items-center gap-1 md:gap-1.5 px-2 md:px-2.5 py-0.5 md:py-1 bg-morandi-forest text-white rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest whitespace-nowrap shrink-0"
+                                      >
+                                        <MapPin className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                                        MAP
+                                      </a>
+                                      <button 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteItem(item.id);
+                                        }}
+                                        className="p-1 md:p-1.5 text-morandi-forest/10 hover:text-red-400 rounded-full transition-all shrink-0"
+                                      >
+                                        <Trash2 className="w-3 md:w-3.5 h-3 md:h-3.5" />
+                                      </button>
+                                   </div>
+                                   
+                                   <div className="flex flex-col md:items-end w-full">
+                                      <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-morandi-forest/40 mb-0.5">{item.type}</span>
+                                      <h3 className="text-2xl md:text-4xl font-bold text-morandi-forest md:text-right leading-tight max-w-full tracking-tight w-full line-clamp-2">{item.title}</h3>
+                                   </div>
+                                </div>
+                              </div>
+
+                              <PlaceThumbnail 
+                                item={item} 
+                                cachedImage={imageCache[item.id]} 
+                                onImageGenerated={handleImageGenerated} 
+                              />
+
+                              <div className="relative pl-6 md:pl-20 border-l-[4px] md:border-l-[8px] border-morandi-sage/30">
+                                <p className="text-morandi-forest/80 leading-relaxed font-medium text-lg md:text-2xl italic font-serif opacity-90 leading-snug">
+                                  "{item.description}"
+                                </p>
+                              </div>
+                            </Reorder.Item>
                           ))}
-                        </div>
-                      </div>
+                        </AnimatePresence>
+                      </Reorder.Group>
+                    </div>
+                  </motion.div>
+                )}
 
-                      <div className="mt-8 md:mt-20">
-                        <Reorder.Group axis="y" values={activeItems} onReorder={handleReorder} className="space-y-24 md:space-y-40">
-                          <AnimatePresence mode="popLayout">
-                            {activeItems.map((item) => (
-                              <Reorder.Item 
-                                key={item.id} 
-                                value={item}
-                                initial={{ opacity: 0, y: 50 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.9, x: -50 }}
-                                transition={{ duration: 0.6 }}
-                                className="flex flex-col gap-8 md:gap-12 cursor-grab active:cursor-grabbing bg-transparent relative group"
-                              >
-                                <div className="absolute -left-10 md:left-[-64px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-morandi-forest/20 hidden md:block">
-                                  <GripVertical className="w-8 md:w-10 h-8 md:h-10" />
-                                </div>
+                {activeView === 'survival' && (
+                  <motion.div
+                    key="survival-view"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {survivalKit && <SurvivalKit kit={survivalKit} />}
+                  </motion.div>
+                )}
 
-                                <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-morandi-forest/5 pb-4 md:pb-8 relative gap-4">
-                                  <div className="relative shrink-0 flex items-center md:block">
-                                     <span className="text-7xl md:text-[11rem] font-serif text-morandi-forest/5 md:absolute md:top-[-64px] md:left-[-48px] select-none group-hover:text-morandi-forest/10 transition-all duration-1000 pointer-events-none md:block hidden">{item.time}</span>
-                                     <span className="text-5xl md:text-8xl font-serif text-morandi-forest relative z-10 drop-shadow-sm tracking-tighter leading-none">{item.time}</span>
-                                  </div>
-                                  
-                                  <div className="flex flex-col md:items-end gap-1.5 md:gap-2 mb-1 md:mb-2 min-w-0 w-full overflow-hidden">
-                                     <div className="flex items-center gap-1 flex-nowrap shrink-0 overflow-x-auto no-scrollbar md:justify-end w-full pb-1">
-                                        {item.duration && (
-                                          <div className="flex items-center gap-1 md:gap-1.5 px-2 md:px-2.5 py-0.5 md:py-1 bg-morandi-sage/5 text-morandi-sage rounded-full border border-morandi-sage/10 whitespace-nowrap shrink-0">
-                                             <Timer className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                                             <span className="text-[8px] md:text-[9px] font-black uppercase tracking-wider">{item.duration}</span>
-                                          </div>
-                                        )}
-                                        {item.costEstimate && (
-                                          <div className="flex items-center gap-1 md:gap-1.5 px-2 md:px-2.5 py-0.5 md:py-1 bg-morandi-sunset/5 text-morandi-sunset font-bold rounded-full border border-morandi-sunset/10 whitespace-nowrap shrink-0">
-                                             <DollarSign className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                                             <span className="text-[8px] md:text-[9px] font-black uppercase tracking-wider">{item.costEstimate}</span>
-                                          </div>
-                                        )}
-                                        <a 
-                                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.title}, ${config.destination}`)}`}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          className="flex items-center gap-1 md:gap-1.5 px-2 md:px-2.5 py-0.5 md:py-1 bg-morandi-forest text-white rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest whitespace-nowrap shrink-0"
-                                        >
-                                          <MapPin className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                                          MAP
-                                        </a>
-                                        <button 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteItem(item.id);
-                                          }}
-                                          className="p-1 md:p-1.5 text-morandi-forest/10 hover:text-red-400 rounded-full transition-all shrink-0"
-                                        >
-                                          <Trash2 className="w-3 md:w-3.5 h-3 md:h-3.5" />
-                                        </button>
-                                     </div>
-                                     
-                                     <div className="flex flex-col md:items-end w-full">
-                                        <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-morandi-forest/40 mb-0.5">{item.type}</span>
-                                        <h3 className="text-2xl md:text-4xl font-bold text-morandi-forest md:text-right leading-tight max-w-full tracking-tight w-full line-clamp-2">{item.title}</h3>
-                                     </div>
-                                  </div>
-                                </div>
-
-                                <PlaceThumbnail 
-                                  item={item} 
-                                  cachedImage={imageCache[item.id]} 
-                                  onImageGenerated={handleImageGenerated} 
-                                />
-
-                                <div className="relative pl-6 md:pl-20 border-l-[4px] md:border-l-[8px] border-morandi-sage/30">
-                                  <p className="text-morandi-forest/80 leading-relaxed font-medium text-lg md:text-2xl italic font-serif opacity-90 leading-snug">
-                                    "{item.description}"
-                                  </p>
-                                </div>
-                              </Reorder.Item>
-                            ))}
-                          </AnimatePresence>
-                        </Reorder.Group>
-                      </div>
-                    </motion.div>
-                  ) : activeView === 'survival' ? (
-                    <motion.div
-                      key="survival-view"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      {survivalKit && <SurvivalKit kit={survivalKit} />}
-                    </motion.div>
-                  ) : activeView === 'schedule' ? (
+                {activeView === 'schedule' && (
+                  <motion.div
+                    key="schedule-view-container"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                  >
                     <div className="space-y-6">
                       <ScheduleView
                         scheduleDays={scheduleDays}
@@ -1177,10 +1193,20 @@ export default function Planner({ profile }: PlannerProps) {
                         cancelScheduleChanges={cancelScheduleChanges}
                       />
                     </div>
-                  ) : (
+                  </motion.div>
+                )}
+
+                {activeView === 'map' && (
+                  <motion.div
+                    key="map-view-container"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.5 }}
+                  >
                     <MapView destination={config.destination} items={activeItems} />
-                  )}
-                </AnimatePresence>
+                  </motion.div>
+                )}
               </div>
             </div>
 
