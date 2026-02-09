@@ -57,6 +57,11 @@ const parseDurationMinutes = (raw?: string | null) => {
 
 const formatDuration = (minutes: number) => `${minutes} min`;
 
+const buildTimelineSignature = (items: ItineraryItem[]) =>
+  items
+    .map(item => `${item.id}-${item.startTime || item.time}-${item.duration}`)
+    .join('|');
+
 const calculateTimeline = (items: ItineraryItem[], dayStartTime: string) => {
   const startMinutes = parseTimeToMinutes(dayStartTime) ?? parseTimeToMinutes(DEFAULT_DAY_START) ?? 9 * 60;
   let cursor = startMinutes;
@@ -208,7 +213,6 @@ export default function Planner({ profile }: PlannerProps) {
     previousPlan: DayPlan[];
     aiSummary?: string;
     aiItems?: ItineraryRiskItem[];
-    fatigueScore?: number;
     suggestions?: string[];
   } | null>(null);
   const [magicCommand, setMagicCommand] = useState('');
@@ -220,6 +224,15 @@ export default function Planner({ profile }: PlannerProps) {
   const [isRiskAnalyzing, setIsRiskAnalyzing] = useState(false);
   const riskDebounceRef = useRef<number | null>(null);
   const riskRequestIdRef = useRef(0);
+  const [pendingRiskReview, setPendingRiskReview] = useState<{
+    date: string;
+    dayStart: string;
+    items: ItineraryItem[];
+    previousPlanSnapshot: DayPlan[];
+    conflicts: string[];
+    signature: string;
+  } | null>(null);
+  const [lastReviewedSignatures, setLastReviewedSignatures] = useState<Record<string, string>>({});
 
   // Session-wide image cache to persist sketches across tab switches
   const [imageCache, setImageCache] = useState<Record<string, string>>({});
@@ -309,6 +322,8 @@ export default function Planner({ profile }: PlannerProps) {
       });
       setDayStartTimes(initialDayStarts);
       setConflictModal(null);
+      setPendingRiskReview(null);
+      setLastReviewedSignatures({});
       if (result.itinerary.length > 0) {
         setActiveDate(result.itinerary[0].date);
       }
@@ -356,6 +371,8 @@ export default function Planner({ profile }: PlannerProps) {
           setPlan(prev => prev ? prev.map(d => d.date === date ? { ...d, items: recalculatedItems } : d) : prev);
         }
 
+        const finalSignature = buildTimelineSignature(recalculatedItems);
+        setLastReviewedSignatures(prev => ({ ...prev, [date]: finalSignature }));
         const shouldWarn = result.shouldWarn || recalculatedConflicts.length > 0;
         if (shouldWarn) {
           setConflictModal({
@@ -364,7 +381,6 @@ export default function Planner({ profile }: PlannerProps) {
             previousPlan: previousPlanSnapshot,
             aiSummary: result.summary,
             aiItems: result.itemRisks,
-            fatigueScore: result.fatigueScore,
             suggestions: result.suggestions
           });
         } else {
@@ -385,14 +401,22 @@ export default function Planner({ profile }: PlannerProps) {
     const previousPlanSnapshot = plan;
     const dayStart = overrideDayStart ?? dayStartTimes[date] ?? DEFAULT_DAY_START;
     const { items: timelineItems, conflicts } = calculateTimeline(newItems, dayStart);
+    const signature = buildTimelineSignature(timelineItems);
     const updatedPlan = plan.map(d => d.date === date ? { ...d, items: timelineItems } : d);
     setPlan(updatedPlan);
-    if (conflicts.length > 0) {
-      setConflictModal({ date, conflicts, previousPlan: previousPlanSnapshot });
-    } else {
-      setConflictModal(null);
+    setConflictModal(null);
+    if (lastReviewedSignatures[date] && lastReviewedSignatures[date] === signature) {
+      setPendingRiskReview(null);
+      return;
     }
-    scheduleRiskAnalysis(date, timelineItems, dayStart, previousPlanSnapshot, conflicts);
+    setPendingRiskReview({
+      date,
+      dayStart,
+      items: timelineItems,
+      previousPlanSnapshot,
+      conflicts,
+      signature
+    });
   };
 
   const updateDayStart = (date: string, minutesDelta: number) => {
@@ -456,6 +480,19 @@ export default function Planner({ profile }: PlannerProps) {
     applyDayUpdate(date, updated);
   };
 
+  const triggerPendingRiskReview = useCallback(() => {
+    if (!pendingRiskReview) return;
+    setIsRiskAnalyzing(true);
+    scheduleRiskAnalysis(
+      pendingRiskReview.date,
+      pendingRiskReview.items,
+      pendingRiskReview.dayStart,
+      pendingRiskReview.previousPlanSnapshot,
+      pendingRiskReview.conflicts
+    );
+    setPendingRiskReview(null);
+  }, [pendingRiskReview, scheduleRiskAnalysis]);
+
   const startEditTitle = (itemId: string, currentTitle: string) => {
     setEditingTitleId(itemId);
     setEditingTitleValue(currentTitle);
@@ -486,6 +523,67 @@ export default function Planner({ profile }: PlannerProps) {
     return plan.find(d => d.date === dateToFind)?.items || [];
   }, [plan, activeDate]);
 
+  const analyzeScheduleChanges = async () => {
+    if (!pendingRiskReview) return [];
+    
+    setIsRiskAnalyzing(true);
+    try {
+      const result = await analyzeItineraryRisks(
+        profile,
+        config,
+        pendingRiskReview.date,
+        pendingRiskReview.dayStart,
+        pendingRiskReview.items,
+        TRAVEL_BUFFER_MINUTES
+      );
+
+      // Return changes in the format Expected by ChangesImpactModal
+      return [{
+        date: pendingRiskReview.date,
+        before: {
+          dayStart: pendingRiskReview.dayStart, // This might need to be refined if we want the actual 'before' start
+          items: pendingRiskReview.previousPlanSnapshot.find(d => d.date === pendingRiskReview.date)?.items || []
+        },
+        after: {
+          dayStart: pendingRiskReview.dayStart,
+          items: result.updatedItems && result.updatedItems.length > 0 ? result.updatedItems : pendingRiskReview.items
+        },
+        summary: result.summary,
+        fatigueScore: result.fatigueScore,
+        itemRisks: result.itemRisks,
+        suggestions: result.suggestions
+      }];
+    } catch (e) {
+      console.error("Analysis failed:", e);
+      return [];
+    } finally {
+      setIsRiskAnalyzing(false);
+    }
+  };
+
+  const applyScheduleChanges = async (changesWrapper: { changes: any[] }) => {
+    const { changes } = changesWrapper;
+    if (changes && changes.length > 0) {
+      const change = changes[0];
+      const date = change.date;
+      const updatedItems = change.after.items;
+      
+      const recalculated = calculateTimeline(updatedItems, change.after.dayStart);
+      const finalSignature = buildTimelineSignature(recalculated.items);
+      
+      setPlan(prev => prev ? prev.map(d => d.date === date ? { ...d, items: recalculated.items } : d) : prev);
+      setLastReviewedSignatures(prev => ({ ...prev, [date]: finalSignature }));
+    }
+    setPendingRiskReview(null);
+  };
+
+  const cancelScheduleChanges = () => {
+    if (pendingRiskReview) {
+      setPlan(pendingRiskReview.previousPlanSnapshot);
+      setPendingRiskReview(null);
+    }
+  };
+
   const scheduleDays = useMemo(() => {
     if (!plan) return [];
     return plan.map(day => {
@@ -503,19 +601,19 @@ export default function Planner({ profile }: PlannerProps) {
     const targetDay = plan.find(day => day.date === targetDate);
     if (!targetDay || !targetDate) return;
 
-    const deleteMatch = command.match(/把(.+?)删(了)?/);
-    const durationMatch = command.match(/把(.+?)时间改成(.+)/);
-    const shiftMatch = command.match(/所有行程.*往后推\s*(\d+)?\s*(小时|分钟|m|min|h|hour|hours)?/);
+    const deleteMatch = command.match(/delete\s+(.+)/i);
+    const durationMatch = command.match(/change\s+(.+)\s+to\s+(.+)/i);
+    const shiftMatch = command.match(/delay\s+all\s+by\s*(\d+)?\s*(h|hour|hours|m|min|minutes)?/i);
 
     if (deleteMatch) {
-      const keyword = deleteMatch[1].trim();
-      const item = targetDay.items.find(it => it.title.includes(keyword));
+      const keyword = (deleteMatch[1] || deleteMatch[2]).trim();
+      const item = targetDay.items.find(it => it.title.toLowerCase().includes(keyword.toLowerCase()));
       if (!item) {
-        setMagicFeedback(`未找到包含“${keyword}”的行程。`);
+        setMagicFeedback(`Could not find an activity containing "${keyword}".`);
         return;
       }
       handleScheduleDelete(targetDate, item.id);
-      setMagicFeedback(`已删除：${item.title}`);
+      setMagicFeedback(`Deleted: ${item.title}`);
       setMagicCommand('');
       return;
     }
@@ -525,31 +623,31 @@ export default function Planner({ profile }: PlannerProps) {
       const durationInput = durationMatch[2].trim();
       const minutes = parseDurationMinutes(durationInput);
       if (!minutes) {
-        setMagicFeedback('无法识别时长，请尝试例如“90分钟”或“2小时”。');
+        setMagicFeedback('Could not recognize the duration. Try "90 min" or "2 hours".');
         return;
       }
-      const item = targetDay.items.find(it => it.title.includes(keyword));
+      const item = targetDay.items.find(it => it.title.toLowerCase().includes(keyword.toLowerCase()));
       if (!item) {
-        setMagicFeedback(`未找到包含“${keyword}”的行程。`);
+        setMagicFeedback(`Could not find an activity containing "${keyword}".`);
         return;
       }
       handleDurationEdit(targetDate, item.id, minutes);
-      setMagicFeedback(`已更新：${item.title} 为 ${formatDuration(minutes)}`);
+      setMagicFeedback(`Updated: ${item.title} to ${formatDuration(minutes)}`);
       setMagicCommand('');
       return;
     }
 
     if (shiftMatch) {
       const amount = shiftMatch[1] ? parseInt(shiftMatch[1], 10) : 1;
-      const unit = shiftMatch[2] || '小时';
-      const deltaMinutes = unit.includes('小时') || unit.includes('h') ? amount * 60 : amount;
+      const unit = shiftMatch[2] || 'hour';
+      const deltaMinutes = unit.includes('hour') || unit.includes('h') ? amount * 60 : amount;
       updateDayStart(targetDate, deltaMinutes);
-      setMagicFeedback(`已整体顺延 ${deltaMinutes} 分钟`);
+      setMagicFeedback(`The entire schedule has been delayed by ${deltaMinutes} minutes.`);
       setMagicCommand('');
       return;
     }
 
-    setMagicFeedback('未能解析该指令，请尝试“把午饭时间改成2小时”或“把美术馆删了”。');
+    setMagicFeedback('Could not parse the command. Try "Change lunch to 2 hours" or "Delete the museum".');
   };
 
   const paperBackgroundStyle = {
@@ -609,6 +707,16 @@ export default function Planner({ profile }: PlannerProps) {
   return (
     <div className="min-h-screen relative bg-transparent overflow-x-hidden">
       <LoadingOverlay isVisible={loading} destination={config.destination} loadingImage={null} />
+
+      {isRiskAnalyzing && !conflictModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-morandi-forest/40 backdrop-blur-lg">
+          <div className="glass-panel px-8 py-6 rounded-4xl border-white/60 shadow-5xl flex flex-col items-center gap-3 text-morandi-forest">
+            <div className="w-9 h-9 border-4 border-morandi-forest/15 border-t-morandi-forest rounded-full animate-spin" />
+            <div className="text-xs font-black uppercase tracking-[0.35em]">AI Itinerary Reviewing...</div>
+            <p className="text-[11px] text-morandi-forest/60">Please wait, the analysis results will be displayed automatically once complete.</p>
+          </div>
+        </div>
+      )}
 
       <InquiryModal
         inquiryData={inquiryData}
@@ -1039,31 +1147,36 @@ export default function Planner({ profile }: PlannerProps) {
                       {survivalKit && <SurvivalKit kit={survivalKit} />}
                     </motion.div>
                   ) : activeView === 'schedule' ? (
-                    <ScheduleView
-                      scheduleDays={scheduleDays}
-                      magicCommand={magicCommand}
-                      magicFeedback={magicFeedback}
-                      onMagicCommandChange={(value) => {
-                        setMagicCommand(value);
-                        setMagicFeedback(null);
-                      }}
-                      onApplyMagicCommand={applyMagicCommand}
-                      onScheduleReorder={handleScheduleReorder}
-                      onScheduleDelete={handleScheduleDelete}
-                      onScheduleInsert={handleScheduleInsert}
-                      onUpdateDayStart={updateDayStart}
-                      editingTitleId={editingTitleId}
-                      editingTitleValue={editingTitleValue}
-                      onStartEditTitle={startEditTitle}
-                      onSetEditingTitleValue={setEditingTitleValue}
-                      onFinishEditTitle={finishEditTitle}
-                      editingDurationId={editingDurationId}
-                      durationDraft={durationDraft}
-                      onSetDurationDraft={setDurationDraft}
-                      onStartEditDuration={startEditDuration}
-                      onFinishEditDuration={finishEditDuration}
-                      parseDurationMinutes={parseDurationMinutes}
-                    />
+                    <div className="space-y-6">
+                      <ScheduleView
+                        scheduleDays={scheduleDays}
+                        magicCommand={magicCommand}
+                        magicFeedback={magicFeedback}
+                        onMagicCommandChange={(value) => {
+                          setMagicCommand(value);
+                          setMagicFeedback(null);
+                        }}
+                        onApplyMagicCommand={applyMagicCommand}
+                        onScheduleReorder={handleScheduleReorder}
+                        onScheduleDelete={handleScheduleDelete}
+                        onScheduleInsert={handleScheduleInsert}
+                        onUpdateDayStart={updateDayStart}
+                        editingTitleId={editingTitleId}
+                        editingTitleValue={editingTitleValue}
+                        onStartEditTitle={startEditTitle}
+                        onSetEditingTitleValue={setEditingTitleValue}
+                        onFinishEditTitle={finishEditTitle}
+                        editingDurationId={editingDurationId}
+                        durationDraft={durationDraft}
+                        onSetDurationDraft={setDurationDraft}
+                        onStartEditDuration={startEditDuration}
+                        onFinishEditDuration={finishEditDuration}
+                        parseDurationMinutes={parseDurationMinutes}
+                        analyzeScheduleChanges={analyzeScheduleChanges}
+                        applyScheduleChanges={applyScheduleChanges}
+                        cancelScheduleChanges={cancelScheduleChanges}
+                      />
+                    </div>
                   ) : (
                     <MapView destination={config.destination} items={activeItems} />
                   )}
@@ -1113,26 +1226,26 @@ export default function Planner({ profile }: PlannerProps) {
                 </button>
                 <button 
                   onClick={() => setActiveView('schedule')}
-                  className={`md:hidden relative flex items-center gap-2 px-6 py-3 rounded-full transition-all duration-500 overflow-hidden ${activeView === 'schedule' ? 'text-white' : 'text-morandi-forest/40 hover:text-morandi-forest'}`}
+                  className={`relative flex items-center gap-2 md:gap-4 px-6 md:px-10 py-3 md:py-4 rounded-full transition-all duration-500 overflow-hidden ${activeView === 'schedule' ? 'text-white' : 'text-morandi-forest/40 hover:text-morandi-forest'}`}
                 >
                   {activeView === 'schedule' && (
                     <motion.div layoutId="nav-bg" className="absolute inset-0 bg-morandi-forest z-0" />
                   )}
                   <div className="relative z-10 flex items-center gap-2">
-                    <CalendarClock className="w-4 h-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest hidden xs:block">Schedule</span>
+                    <CalendarClock className="w-4 h-4 md:w-5 md:h-5" />
+                    <span className="text-[10px] md:text-[11px] font-black uppercase tracking-widest hidden xs:block">Schedule</span>
                   </div>
                 </button>
                 <button 
                   onClick={() => setActiveView('map')}
-                  className={`md:hidden relative flex items-center gap-2 px-6 py-3 rounded-full transition-all duration-500 overflow-hidden ${activeView === 'map' ? 'text-white' : 'text-morandi-forest/40 hover:text-morandi-forest'}`}
+                  className={`relative flex items-center gap-2 md:gap-4 px-6 md:px-10 py-3 md:py-4 rounded-full transition-all duration-500 overflow-hidden ${activeView === 'map' ? 'text-white' : 'text-morandi-forest/40 hover:text-morandi-forest'}`}
                 >
                   {activeView === 'map' && (
                     <motion.div layoutId="nav-bg" className="absolute inset-0 bg-morandi-forest z-0" />
                   )}
                   <div className="relative z-10 flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest hidden xs:block">Map</span>
+                    <MapPin className="w-4 h-4 md:w-5 md:h-5" />
+                    <span className="text-[10px] md:text-[11px] font-black uppercase tracking-widest hidden xs:block">Map</span>
                   </div>
                 </button>
               </div>

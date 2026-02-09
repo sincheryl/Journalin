@@ -52,28 +52,23 @@ export default function ConflictModal({
               </div>
             </div>
             <div className="space-y-2 text-sm text-morandi-forest/70">
-              <p>检测到潜在风险：可能涉及营业时间、交通衔接或体力负荷。</p>
-              <p className="italic">你的编辑已保留，但建议根据提示调整时间或顺序。</p>
+              <p>Potential risks detected: may involve operating hours, transport, or pace.</p>
+              <p className="italic">Your edits have been kept, but adjustments to timing or sequence are recommended based on the suggestions.</p>
             </div>
             {isRiskAnalyzing && (
               <div className="text-[10px] uppercase tracking-widest text-morandi-forest/40 font-black">
-                AI 正在分析真实营业时间与体力负荷...
+                AI is analyzing actual operating hours and pace...
               </div>
             )}
-            {conflictModal.aiSummary && (
-              <div className="bg-white/60 rounded-3xl p-4 border border-white/70 space-y-3">
-                <div className="text-[10px] uppercase tracking-widest text-morandi-forest/40 font-black">
-                  AI 风险说明
-                </div>
-                <p className="text-sm text-morandi-forest/80">{conflictModal.aiSummary}</p>
-                {typeof conflictModal.fatigueScore === 'number' && (
-                  <div className="text-xs text-morandi-forest/60">
-                    体力负荷评分：{Math.round(conflictModal.fatigueScore)} / 100
-                  </div>
-                )}
-                {conflictModal.aiItems && conflictModal.aiItems.length > 0 && (
-                  <div className="space-y-2">
-                    {conflictModal.aiItems.map((risk) => (
+                {conflictModal.aiSummary && (
+                  <div className="bg-white/60 rounded-3xl p-4 border border-white/70 space-y-3">
+                    <div className="text-[10px] uppercase tracking-widest text-morandi-forest/40 font-black">
+                      AI Risk Assessment
+                    </div>
+                    <p className="text-sm text-morandi-forest/80">{conflictModal.aiSummary}</p>
+                    {conflictModal.aiItems && conflictModal.aiItems.length > 0 && (
+                      <div className="space-y-2">
+                        {conflictModal.aiItems.map((risk) => (
                       <div key={risk.itemId} className="text-xs text-morandi-forest/70 space-y-1">
                         <div className="flex items-start justify-between gap-4">
                           <span className="font-semibold">{risk.title}</span>

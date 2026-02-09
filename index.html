@@ -32,6 +32,10 @@
               '4xl': '32px',
               '5xl': '48px',
             },
+            boxShadow: {
+              'side': '20px 20px 50px -12px rgba(9, 47, 38, 0.12)',
+              '5xl': '0 35px 70px -15px rgba(9, 47, 38, 0.25)',
+            },
             animation: {
               'mesh': 'mesh 20s ease-in-out infinite',
               'float': 'float 8s ease-in-out infinite',
@@ -82,10 +86,11 @@
         scrollbar-width: none;
       }
       .glass-panel {
-        background: rgba(247, 249, 248, 0.6);
+        background: rgba(247, 249, 248, 0.65);
         backdrop-filter: blur(40px);
         -webkit-backdrop-filter: blur(40px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 20px 20px 50px -12px rgba(9, 47, 38, 0.08);
       }
 
       /* Morandi Map Styles Override */

@@ -330,7 +330,7 @@ export const generatePlan = async (profile: UserProfile, config: TripConfig, ext
             }
           },
           temperature: 0.1,
-          systemInstruction: "You are an elite travel curator. Always provide real geographical coordinates, accurate operating hours, and SPECIFIC, REAL names for all venues and hotels. Use emojis for app icons. Tailor hotel quality strictly to the budget choice: high-rated hostels for budget, landmark 5-star properties for luxury."
+          systemInstruction: "You are an elite travel curator. Always provide real geographical coordinates, accurate operating hours, and SPECIFIC, REAL names for all venues and hotels. Use emojis for app icons. Tailor hotel quality strictly to the budget choice: high-rated hostels for budget, landmark 5-star properties for luxury. Ensure the final schedule respects each venue’s opening/closing window, keeping at least a 15 minute buffer before close. If operating hours are uncertain, proactively shorten earlier activities or pick a realistic alternative so no item ends after close or starts before opening."
         },
       });
     });
